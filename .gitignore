@@ -1,0 +1,57 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Environment variables (contains API keys)
+# `.env` itself is tracked as a placeholder template — DO NOT commit real
+# secrets into it. Instead, copy `.env` to `.env.local` (or any of the
+# patterns below) and put your real keys there.
+.env.local
+.env.*.local
+.env.secret
+
+# Huggingface / model caches
+.cache/
+*.lock
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and temporary files
+*.log
+wandb/
+runs/
+
+# Large external artefacts — shipped separately via Hugging Face, not Git.
+# `phase_tree_data/`         → IAAR-Shanghai/phase_tree_data            (dataset)
+# `phase_tree_models/`       → IAAR-Shanghai/phase_tree_models          (model)
+# `phase_tree_models_full/`  → local-only ablation grid (not released)
+# `models/`                  → vendor base models (Qwen2.5-7B-Instruct, Qwen3-Embedding-4B, ...)
+# `results/`                 → IAAR-Shanghai/phase_tree_results         (dataset)
+phase_tree_data/
+phase_tree_models/
+phase_tree_models_full/
+models/
+results/

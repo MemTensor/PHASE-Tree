@@ -1,0 +1,15 @@
+assistant_prefill: ''
+ds_kwargs:
+  name: SimsConv_train
+  path: ./phase_tree_data/processed/SimsConv/m6_phase_tree/train.json
+train_first_n: null
+response_field: output
+system_message: ''
+task_description: English casual conversational roleplay (SimsConv, phase-tree profile).
+user_prompt_template: 'Continue this dialogue, responding in character as {role}.
+  Match their personality, tone, and speech patterns.
+
+
+  Dialogue context:
+
+  {input}'

@@ -1,0 +1,16 @@
+assistant_prefill: ''
+ds_kwargs:
+  name: StarTrek_TNG_ood_test
+  path: ./phase_tree_data/processed/StarTrek_TNG/m6_phase_tree/ood_test.json
+train_first_n: null
+response_field: output
+system_message: ''
+task_description: English long-term TV-series roleplay (Star Trek TNG, phase-tree
+  profile w/ session/moment context). (out-of-distribution test)
+user_prompt_template: 'Continue this dialogue, responding in character as {role}.
+  Match their personality, tone, and speech patterns.
+
+
+  Dialogue context:
+
+  {input}'

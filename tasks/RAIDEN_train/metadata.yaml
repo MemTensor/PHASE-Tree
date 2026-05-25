@@ -1,0 +1,16 @@
+assistant_prefill: ''
+ds_kwargs:
+  name: RAIDEN_train
+  path: ./phase_tree_data/processed/RAIDEN/m6_phase_tree/train.json
+train_first_n: null
+response_field: output
+system_message: ''
+task_description: 'Chinese roleplay dialogue (RAIDEN, phase-tree profile): respond
+  in character given a hierarchical attribute-tree profile.'
+user_prompt_template: 'Continue this dialogue, responding in character as {role}.
+  Match their personality, tone, and speech patterns.
+
+
+  Dialogue context:
+
+  {input}'

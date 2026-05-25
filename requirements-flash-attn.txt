@@ -1,0 +1,19 @@
+# Optional: FlashAttention-2 kernels.
+#
+# Why a separate file?
+#   `flash-attn` builds CUDA extensions against the *currently installed* torch
+#   and CUDA toolkit, so it must be installed AFTER `requirements.txt` (which
+#   brings in torch). It also requires `--no-build-isolation`, otherwise pip
+#   builds it in a fresh environment without torch and the wheel link step
+#   fails with `ModuleNotFoundError: torch`.
+#
+# Install:
+#     pip install -r requirements-flash-attn.txt --no-build-isolation
+#
+# Requirements: CUDA >= 11.7 and an Ampere-class or newer GPU (A100, H100,
+# RTX 30xx/40xx, ...). If flash-attn cannot be built or loaded on your
+# environment, the codebase falls back to `attn_implementation="sdpa"`
+# automatically; you will lose some throughput but training/inference still
+# works.
+
+flash-attn>=2.4.0

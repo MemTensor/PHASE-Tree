@@ -1,0 +1,60 @@
+# ============================================================================
+# PHASE-Tree hypermod fine-tuning config — FROZEN HEADS variant
+# ----------------------------------------------------------------------------
+# Same as phase_tree_hyper_lora.yaml but with freeze_heads: true.
+# The output heads (~80% of hypermod params) are frozen; only the encoder,
+# mixer, and MLP trunk (~20%) are trainable.
+# ============================================================================
+
+batch_size: 4
+train_ds_names:
+  - RAIDEN_train
+  - CharacterEval_train
+  - HPD_train
+  - SimsConv_train
+  - ChatHaruhi_train
+  - Friends_train
+  - StarTrek_TNG_train
+  - TheOffice_train
+
+eval_ds_info:
+  - RAIDEN_random_test
+  - RAIDEN_ood_test
+  - CharacterEval_random_test
+  - CharacterEval_ood_test
+  - HPD_random_test
+  - HPD_ood_test
+  - SimsConv_random_test
+  - SimsConv_ood_test
+  - ChatHaruhi_random_test
+  - ChatHaruhi_ood_test
+  - Friends_random_test
+  - Friends_ood_test
+  - StarTrek_TNG_random_test
+  - StarTrek_TNG_ood_test
+  - TheOffice_random_test
+  - TheOffice_ood_test
+
+exp_setup: hyper_lora
+grad_accum_steps: 2
+logging_freq: 50
+lr: 5.0e-6
+max_grad_norm: 1.0
+model_dir: models/Qwen2.5-7B-Instruct
+neftune_noise_alpha: 5
+seed: 42
+skip_eval: false
+target_modules:
+  - q_proj
+  - v_proj
+sft_mode: completion
+use_per_task_emb: true
+use_one_hot_task_emb: false
+warmup_frac: 0.05
+use_hierarchical_sampler: true
+inp_max_len: 1024
+head_in_size: 2048
+hypernet_latent_size: 1024
+delta_w_scaling: 100
+
+freeze_heads: true

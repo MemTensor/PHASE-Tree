@@ -1,0 +1,69 @@
+# ============================================================================
+# PHASE-Tree hypermod fine-tuning config (Qwen2.5-7B-Instruct, hyper-LoRA SFT)
+# ----------------------------------------------------------------------------
+# All training tasks are PHASE-Tree role-play datasets, m6_phase_tree variant.
+# Each `train_ds_names` entry corresponds to a tasks/<name>/metadata.yaml.
+# ============================================================================
+
+batch_size: 4
+train_ds_names:
+  - RAIDEN_train
+  - CharacterEval_train
+  - HPD_train
+  - SimsConv_train
+  - ChatHaruhi_train
+  - Friends_train
+  - StarTrek_TNG_train
+  - TheOffice_train
+
+# Evaluation tasks (random-split and OOD test sets for each training dataset).
+# These are loaded from tasks/<name>_random_test/ and tasks/<name>_ood_test/
+# metadata.yaml files, pointing to the corresponding JSON splits.
+# Set --skip_val=false to enable validation during training.
+eval_ds_info:
+  - RAIDEN_random_test
+  - RAIDEN_ood_test
+  - CharacterEval_random_test
+  - CharacterEval_ood_test
+  - HPD_random_test
+  - HPD_ood_test
+  - SimsConv_random_test
+  - SimsConv_ood_test
+  - ChatHaruhi_random_test
+  - ChatHaruhi_ood_test
+  - Friends_random_test
+  - Friends_ood_test
+  - StarTrek_TNG_random_test
+  - StarTrek_TNG_ood_test
+  - TheOffice_random_test
+  - TheOffice_ood_test
+
+exp_setup: hyper_lora
+grad_accum_steps: 2
+logging_freq: 50
+lr: 5.0e-6                # warm-start fine-tune: smaller than the pretrain lr (2e-5)
+max_grad_norm: 1.0
+# Optional speed-up: copy or symlink model weights into a tmpfs RAM disk
+# (e.g. /dev/shm/phase/models/<name> or /dev/shm/<name>) for faster I/O; the
+# eval scripts auto-remap to those locations when present.
+model_dir: models/Qwen2.5-7B-Instruct
+neftune_noise_alpha: 5
+seed: 42
+skip_eval: false
+target_modules:
+  - q_proj
+  - v_proj
+sft_mode: completion
+use_per_task_emb: true    # match warm-start hypermod's training mode (one task-emb path)
+use_one_hot_task_emb: false
+warmup_frac: 0.05         # warm-start: shorter warmup than the pretrain (0.2)
+use_hierarchical_sampler: true
+inp_max_len: 1024
+head_in_size: 2048
+hypernet_latent_size: 1024
+delta_w_scaling: 100
+
+# Freeze the hypermod output heads during SFT to preserve pretrained LoRA
+# generation capability. Only encoder + mixer + MLP trunk are trainable (~20%).
+# Set to false (or remove) to train all hypermod parameters.
+freeze_heads: false

@@ -1,0 +1,16 @@
+assistant_prefill: ''
+ds_kwargs:
+  name: HPD_random_test
+  path: ./phase_tree_data/processed/HPD/m6_phase_tree/random_test.json
+train_first_n: null
+response_field: output
+system_message: ''
+task_description: English Harry Potter roleplay dialogue (HPD, phase-tree profile).
+  (random-split test)
+user_prompt_template: 'Continue this dialogue, responding in character as {role}.
+  Match their personality, tone, and speech patterns.
+
+
+  Dialogue context:
+
+  {input}'

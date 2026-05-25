@@ -1,0 +1,41 @@
+# PHASE-Tree core Python dependencies.
+# Tested on Python 3.10 + CUDA 12.x (Linux).
+#
+# Quick install:
+#     pip install -r requirements.txt
+#     pip install -r requirements-flash-attn.txt --no-build-isolation   # optional, recommended
+#
+# For PyTorch wheels matched to your local CUDA driver, see
+# https://pytorch.org/get-started/locally/ . For vLLM install troubleshooting
+# see https://docs.vllm.ai/ .
+
+# Deep learning stack
+torch>=2.1.0
+transformers>=4.45.0,<5.0.0
+peft>=0.13.0
+accelerate>=0.34.0
+datasets>=2.20.0
+safetensors>=0.4.0
+huggingface_hub>=0.24.0
+
+# Inference / serving
+vllm>=0.5.4
+
+# Embedding / retrieval (used by evaluation/retrieval.py LocalEmbedClient)
+sentence-transformers>=2.7.0
+
+# Scientific / data
+numpy>=1.24,<3.0
+pandas>=2.0
+scipy>=1.10
+scikit-learn>=1.3
+matplotlib>=3.7
+
+# LLM API clients (preprocessing, judge, evaluation)
+openai>=1.40.0
+python-dotenv>=1.0.0
+
+# Logging & utilities
+wandb>=0.17.0
+tqdm>=4.65
+PyYAML>=6.0
