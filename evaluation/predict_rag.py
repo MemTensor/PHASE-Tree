@@ -67,6 +67,7 @@ except ImportError:
 
 from retrieval import (RetrievalPool, LocalEmbedClient,  # noqa: E402
                        format_demonstrations)
+from predict_prompt import apply_chat_template_safe, _strip_thinking  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -281,6 +282,10 @@ def run_vllm(args, remaining: list[dict], pred_path: str,
         trust_remote_code=True,
         dtype="bfloat16",
         seed=args.seed,
+        # H100 TP=8: custom all-reduce CUDA graph capture can fail with
+        # "invalid argument"; eager + NCCL all-reduce is more stable.
+        disable_custom_all_reduce=True,
+        enforce_eager=True,
     )
     if getattr(args, "gpu_memory_utilization", None):
         llm_kwargs["gpu_memory_utilization"] = args.gpu_memory_utilization
@@ -298,9 +303,7 @@ def run_vllm(args, remaining: list[dict], pred_path: str,
         demos = demos_lookup.get(s["question_id"], "(no retrieval)")
         raw = build_prompt(s, demos, args.mode, profile_lookup)
         messages = [{"role": "user", "content": raw}]
-        text = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True,
-        )
+        text = apply_chat_template_safe(tokenizer, messages, enable_thinking=False)
         prompts.append(text)
 
     print(f"\n  Generating {len(prompts)} predictions ...", flush=True)
@@ -310,7 +313,7 @@ def run_vllm(args, remaining: list[dict], pred_path: str,
 
     with open(pred_path, "a", encoding="utf-8") as f:
         for s, out in zip(remaining, outputs):
-            pred = out.outputs[0].text.strip()
+            pred = _strip_thinking(out.outputs[0].text.strip())
             record = {
                 "question_id": s["question_id"],
                 "role": s["role"],
@@ -374,7 +377,7 @@ def run_hf(args, remaining: list[dict], pred_path: str,
 
         messages_batch = [[{"role": "user", "content": p}] for p in prompts]
         texts = [
-            tokenizer.apply_chat_template(m, tokenize=False, add_generation_prompt=True)
+            apply_chat_template_safe(tokenizer, m, enable_thinking=False)
             for m in messages_batch
         ]
         inputs = tokenizer(
@@ -395,7 +398,7 @@ def run_hf(args, remaining: list[dict], pred_path: str,
 
         for s, ids in zip(batch, output_ids):
             new_ids = ids[inputs["input_ids"].shape[1]:]
-            text = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+            text = _strip_thinking(tokenizer.decode(new_ids, skip_special_tokens=True).strip())
             record = {
                 "question_id": s["question_id"],
                 "role": s["role"],
@@ -505,8 +508,7 @@ def _compute_token_stats(samples: list[dict], model_path: str,
 
         raw_prompt = build_prompt(s, demos_text, mode, profile_lookup)
         messages = [{"role": "user", "content": raw_prompt}]
-        full_prompt = tok.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True)
+        full_prompt = apply_chat_template_safe(tok, messages, enable_thinking=False)
         prompt_lens.append(len(tok.encode(full_prompt)))
 
     return {

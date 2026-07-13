@@ -58,6 +58,9 @@ from datetime import datetime
 from tqdm import tqdm
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from predict_prompt import apply_chat_template_safe, _strip_thinking  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -212,13 +215,32 @@ def _make_batched_cfg_processor():
 # CFG inference (HF backend, batched)
 # ---------------------------------------------------------------------------
 
+def _patch_moe_generate_compat(model) -> None:
+    """Disable transformers MoE decode kernel swap for unsupported models.
+
+    Recent transformers calls ``set_experts_implementation`` inside
+    ``generate()``'s ``_optimize_model_for_decode`` context manager.
+    Qwen3-235B-A22B (Qwen3MoeForCausalLM) raises ValueError there, even
+    though vanilla forward/generate works fine.
+    """
+    if not hasattr(model, "set_experts_implementation"):
+        return
+    model.set_experts_implementation = lambda *args, **kwargs: None
+
+
 def run_cfg(args, remaining: list[dict], pred_path: str) -> float:
+    import gc
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    # Reduce fragmentation when loading 235B across multiple GPUs.
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
+        gc.collect()
+        torch.cuda.empty_cache()
 
     print(f"  Loading model: {args.model}", flush=True)
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
@@ -234,14 +256,16 @@ def run_cfg(args, remaining: list[dict], pred_path: str) -> float:
     except ImportError:
         pass
 
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model,
+    load_kwargs = dict(
         torch_dtype=torch.bfloat16,
         device_map=args.device,
         trust_remote_code=True,
+        low_cpu_mem_usage=True,
         **attn_kwargs,
     )
+    model = AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs)
     model.eval()
+    _patch_moe_generate_compat(model)
     fa_tag = " +FA2" if attn_kwargs else ""
     print(f"  Model loaded{fa_tag}; guidance_scale={args.guidance_scale}; "
           f"batch_size={args.batch_size}", flush=True)
@@ -268,15 +292,13 @@ def run_cfg(args, remaining: list[dict], pred_path: str) -> float:
         uncond_texts = [build_uncond_prompt(s) for s in mini]
 
         cond_chats = [
-            tokenizer.apply_chat_template(
-                [{"role": "user", "content": t}],
-                tokenize=False, add_generation_prompt=True)
+            apply_chat_template_safe(
+                tokenizer, [{"role": "user", "content": t}], enable_thinking=False)
             for t in cond_texts
         ]
         uncond_chats = [
-            tokenizer.apply_chat_template(
-                [{"role": "user", "content": t}],
-                tokenize=False, add_generation_prompt=True)
+            apply_chat_template_safe(
+                tokenizer, [{"role": "user", "content": t}], enable_thinking=False)
             for t in uncond_texts
         ]
 
@@ -307,7 +329,7 @@ def run_cfg(args, remaining: list[dict], pred_path: str) -> float:
         prompt_len = cond_inputs["input_ids"].shape[1]
         for s, ids in zip(mini, output_ids):
             new_ids = ids[prompt_len:]
-            text = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+            text = _strip_thinking(tokenizer.decode(new_ids, skip_special_tokens=True).strip())
             f.write(json.dumps({
                 "question_id": s["question_id"],
                 "role": s["role"],
@@ -410,10 +432,10 @@ def _compute_token_stats(samples: list[dict], model_path: str) -> dict:
         uncond = build_uncond_prompt(s)
         cond_msg = [{"role": "user", "content": cond}]
         uncond_msg = [{"role": "user", "content": uncond}]
-        cond_prompt_lens.append(len(tok.encode(tok.apply_chat_template(
-            cond_msg, tokenize=False, add_generation_prompt=True))))
-        uncond_prompt_lens.append(len(tok.encode(tok.apply_chat_template(
-            uncond_msg, tokenize=False, add_generation_prompt=True))))
+        cond_prompt_lens.append(len(tok.encode(apply_chat_template_safe(
+            tok, cond_msg, enable_thinking=False))))
+        uncond_prompt_lens.append(len(tok.encode(apply_chat_template_safe(
+            tok, uncond_msg, enable_thinking=False))))
 
     return {
         "context_tokens": _arr_stats(context_lens),

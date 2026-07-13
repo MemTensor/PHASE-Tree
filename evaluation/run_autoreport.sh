@@ -13,10 +13,12 @@
 #
 # Environment:
 #   DATASETS     (space-separated list; default: all 8)
-#   TRACKS       (space-separated; default: "comparison hypernet_p2p")
+#   TRACKS       (space-separated; default: "prompt comparison hypernet_p2p phase_tree")
 #   SPLITS       (default: "random_test ood_test")
 #   FORCE        (=1 to force full recomputation)
+#   JUDGE_MODELS (space-separated; default: "gpt-4.1 glm-5.2 deepseek-v4-flash")
 #   COMPARISON_BASELINE  (default: rag)
+#   PROMPT_BASELINE      (default: m2_raw_profile)
 #   HYPERNET_BASELINE    (default: m2_raw_profile)
 # ===========================================================================
 set -uo pipefail
@@ -27,8 +29,10 @@ cd "$ROOT_DIR"
 
 if [ -x "/dev/shm/phase/.venv/bin/python" ]; then
     PYTHON="/dev/shm/phase/.venv/bin/python"
+elif [ -x "${HOME}/miniconda3/envs/phase/bin/python" ]; then
+    PYTHON="${HOME}/miniconda3/envs/phase/bin/python"
 else
-    PYTHON="$(command -v python)"
+    PYTHON="$(command -v python3)"
 fi
 export PYTHONPATH="${ROOT_DIR}:${PYTHONPATH:-}"
 
@@ -36,12 +40,14 @@ ALL_DATASETS="RAIDEN CharacterEval SimsConv ChatHaruhi Friends HPD StarTrek_TNG 
 DATASETS="${1:-${DATASETS:-$ALL_DATASETS}}"
 IFS=' ' read -ra DATASET_LIST <<< "$DATASETS"
 
-TRACKS="${TRACKS:-comparison hypernet_p2p}"
+TRACKS="${TRACKS:-prompt comparison hypernet_p2p phase_tree}"
 IFS=' ' read -ra TRACK_LIST <<< "$TRACKS"
 
 SPLITS="${SPLITS:-random_test ood_test}"
 FORCE="${FORCE:-0}"
+JUDGE_MODELS="${JUDGE_MODELS:-gpt-4.1 glm-5.2 deepseek-v4-flash}"
 COMPARISON_BASELINE="${COMPARISON_BASELINE:-rag}"
+PROMPT_BASELINE="${PROMPT_BASELINE:-m2_raw_profile}"
 HYPERNET_BASELINE="${HYPERNET_BASELINE:-m2_raw_profile}"
 
 FORCE_FLAG=""
@@ -56,6 +62,7 @@ echo "╠═══════════════════════�
 echo "║  Datasets : ${DATASET_LIST[*]}"
 echo "║  Tracks   : ${TRACK_LIST[*]}"
 echo "║  Splits   : ${SPLITS}"
+echo "║  Judges   : ${JUDGE_MODELS}"
 echo "║  Force    : ${FORCE}"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
@@ -77,6 +84,9 @@ for DATASET in "${DATASET_LIST[@]}"; do
             comparison)
                 BASELINE="$COMPARISON_BASELINE"
                 ;;
+            prompt)
+                BASELINE="$PROMPT_BASELINE"
+                ;;
             hypernet_p2p|phase_tree)
                 BASELINE="$HYPERNET_BASELINE"
                 ;;
@@ -92,6 +102,7 @@ for DATASET in "${DATASET_LIST[@]}"; do
         $PYTHON evaluation/autoreport.py \
             --results_dir "$RESULTS_DIR" \
             --splits $SPLITS \
+            --judge_models $JUDGE_MODELS \
             ${BASELINE:+--baseline "$BASELINE"} \
             $FORCE_FLAG
 

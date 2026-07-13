@@ -109,6 +109,31 @@ def build_prompt(sample: dict, prompt_mode: str) -> str:
     return BASELINE_PROMPT.format(character=character, context=context)
 
 
+def apply_chat_template_safe(tokenizer, messages, enable_thinking: bool | None = None) -> str:
+    """Apply chat template; optionally disable Qwen3 thinking mode.
+
+    Qwen3 chat templates accept ``enable_thinking=False`` to emit an empty
+    ``<think>`` block so generation stays in non-reasoning mode. Older
+    tokenizers that do not accept the kwarg fall back silently.
+    """
+    kwargs = dict(tokenize=False, add_generation_prompt=True)
+    if enable_thinking is not None:
+        try:
+            return tokenizer.apply_chat_template(
+                messages, enable_thinking=enable_thinking, **kwargs,
+            )
+        except TypeError:
+            pass
+    return tokenizer.apply_chat_template(messages, **kwargs)
+
+
+def _strip_thinking(text: str) -> str:
+    """Drop a leading ``<think>...</think>`` block if present."""
+    if "</think>" not in text:
+        return text
+    return text.split("</think>", 1)[-1].lstrip("\n").strip()
+
+
 # ---------------------------------------------------------------------------
 # vLLM backend
 # ---------------------------------------------------------------------------
@@ -122,7 +147,7 @@ def run_vllm(args, remaining: list[dict], pred_path: str) -> float:
     tp = min(n_gpus, args.tensor_parallel) if args.tensor_parallel else n_gpus
     print(f"  vLLM: tensor_parallel={tp}, max_model_len={args.max_model_len}", flush=True)
 
-    llm = LLM(
+    llm_kwargs = dict(
         model=args.model,
         tensor_parallel_size=tp,
         max_model_len=args.max_model_len,
@@ -130,7 +155,11 @@ def run_vllm(args, remaining: list[dict], pred_path: str) -> float:
         dtype="bfloat16",
         seed=args.seed,
     )
+    if getattr(args, "gpu_memory_utilization", None) is not None:
+        llm_kwargs["gpu_memory_utilization"] = args.gpu_memory_utilization
+    llm = LLM(**llm_kwargs)
     tokenizer = llm.get_tokenizer()
+    enable_thinking = None if args.enable_thinking else False
 
     sampling_params = SamplingParams(
         temperature=args.temperature,
@@ -142,8 +171,8 @@ def run_vllm(args, remaining: list[dict], pred_path: str) -> float:
     for s in remaining:
         raw = build_prompt(s, args.prompt_mode)
         messages = [{"role": "user", "content": raw}]
-        text = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True,
+        text = apply_chat_template_safe(
+            tokenizer, messages, enable_thinking=enable_thinking,
         )
         prompts.append(text)
 
@@ -154,7 +183,7 @@ def run_vllm(args, remaining: list[dict], pred_path: str) -> float:
 
     with open(pred_path, "a", encoding="utf-8") as f:
         for s, out in zip(remaining, outputs):
-            pred = out.outputs[0].text.strip()
+            pred = _strip_thinking(out.outputs[0].text.strip())
             record = {
                 "question_id": s["question_id"],
                 "role": s["role"],
@@ -197,6 +226,7 @@ def run_hf(args, remaining: list[dict], pred_path: str) -> float:
     )
     model.eval()
     print(f"  Model loaded on {args.device}", flush=True)
+    enable_thinking = None if args.enable_thinking else False
 
     f = open(pred_path, "a", encoding="utf-8")
     t0 = time.perf_counter()
@@ -211,7 +241,9 @@ def run_hf(args, remaining: list[dict], pred_path: str) -> float:
 
         messages_batch = [[{"role": "user", "content": p}] for p in prompts]
         texts = [
-            tokenizer.apply_chat_template(m, tokenize=False, add_generation_prompt=True)
+            apply_chat_template_safe(
+                tokenizer, m, enable_thinking=enable_thinking,
+            )
             for m in messages_batch
         ]
         inputs = tokenizer(
@@ -231,7 +263,9 @@ def run_hf(args, remaining: list[dict], pred_path: str) -> float:
 
         for s, ids in zip(batch, output_ids):
             new_ids = ids[inputs["input_ids"].shape[1]:]
-            text = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+            text = _strip_thinking(
+                tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+            )
             record = {
                 "question_id": s["question_id"],
                 "role": s["role"],
@@ -255,6 +289,44 @@ def run_hf(args, remaining: list[dict], pred_path: str) -> float:
     return elapsed
 
 
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Shared CLI flags for single-task and multi-task modes."""
+    parser.add_argument(
+        "--model", type=str, default=None,
+        help="Path to the model (default: PHASE-Tree/models/Qwen2.5-7B-Instruct)",
+    )
+    parser.add_argument(
+        "--backend", type=str, default="vllm", choices=["vllm", "hf"],
+        help="Inference backend: 'vllm' (fast, default) or 'hf' (fallback)",
+    )
+    parser.add_argument("--temperature", type=float, default=0.3)
+    parser.add_argument("--max_tokens", type=int, default=256,
+                        help="Max generation tokens (256 covers 95%+ of all datasets)")
+    parser.add_argument("--max_model_len", type=int, default=16384,
+                        help="vLLM context window (default 16384; Qwen2.5-7B "
+                             "supports up to 32K). Long-term datasets like "
+                             "Friends m6 have ~4K-token profiles, so 4096 was "
+                             "too tight and produced empty outputs.")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed for reproducibility")
+    parser.add_argument("--tensor_parallel", type=int, default=0,
+                        help="Tensor parallel size for vLLM (0 = auto-detect GPU count)")
+    parser.add_argument("--batch_size", type=int, default=8,
+                        help="Batch size for HF backend (vLLM handles batching automatically)")
+    parser.add_argument("--device", type=str, default="cuda",
+                        help="Device for HF backend (ignored by vLLM)")
+    parser.add_argument("--num_samples", type=int, default=None,
+                        help="Only process first N samples (for debugging)")
+    parser.add_argument(
+        "--gpu_memory_utilization", type=float, default=None,
+        help="vLLM gpu_memory_utilization (default: vLLM default ~0.9)",
+    )
+    parser.add_argument(
+        "--enable_thinking", action="store_true",
+        help="Keep Qwen3 chain-of-thought thinking enabled (default: disabled)",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -271,36 +343,11 @@ def main():
         "--output_dir", type=str, required=True,
         help="Directory for prediction outputs (predictions.jsonl)",
     )
-    parser.add_argument(
-        "--model", type=str, default=None,
-        help="Path to the model (default: PHASE-Tree/models/Qwen2.5-7B-Instruct)",
-    )
-    parser.add_argument(
-        "--backend", type=str, default="vllm", choices=["vllm", "hf"],
-        help="Inference backend: 'vllm' (fast, default) or 'hf' (fallback)",
-    )
     parser.add_argument("--prompt_mode", type=str, default="profile",
                         choices=["profile", "baseline"],
                         help="Prompt mode: 'profile' injects profile_text, "
                              "'baseline' uses context only")
-    parser.add_argument("--device", type=str, default="cuda",
-                        help="Device for HF backend (ignored by vLLM)")
-    parser.add_argument("--batch_size", type=int, default=8,
-                        help="Batch size for HF backend (vLLM handles batching automatically)")
-    parser.add_argument("--tensor_parallel", type=int, default=0,
-                        help="Tensor parallel size for vLLM (0 = auto-detect GPU count)")
-    parser.add_argument("--temperature", type=float, default=0.3)
-    parser.add_argument("--max_tokens", type=int, default=256,
-                        help="Max generation tokens (256 covers 95%+ of all datasets)")
-    parser.add_argument("--max_model_len", type=int, default=16384,
-                        help="vLLM context window (default 16384; Qwen2.5-7B "
-                             "supports up to 32K). Long-term datasets like "
-                             "Friends m6 have ~4K-token profiles, so 4096 was "
-                             "too tight and produced empty outputs.")
-    parser.add_argument("--seed", type=int, default=42,
-                        help="Random seed for reproducibility")
-    parser.add_argument("--num_samples", type=int, default=None,
-                        help="Only process first N samples (for debugging)")
+    _add_common_args(parser)
     args = parser.parse_args()
 
     if args.model is None:
@@ -509,6 +556,8 @@ def _save_meta(args, total_samples: int, predicted_samples: int,
         "seed": args.seed,
         "batch_size": args.batch_size,
         "tensor_parallel": args.tensor_parallel,
+        "gpu_memory_utilization": getattr(args, "gpu_memory_utilization", None),
+        "enable_thinking": bool(getattr(args, "enable_thinking", False)),
         "total_samples": total_samples,
         "predicted_this_run": predicted_samples,
         "data_path": args.data,
@@ -557,18 +606,7 @@ def multi_main():
     parser.add_argument("--tasks", required=True,
                         help="JSON file listing tasks [{data, output_dir, "
                              "prompt_mode?}, ...]")
-    parser.add_argument("--model", type=str, default=None)
-    parser.add_argument("--backend", type=str, default="vllm",
-                        choices=["vllm", "hf"])
-    parser.add_argument("--temperature", type=float, default=0.3)
-    parser.add_argument("--max_tokens", type=int, default=256)
-    parser.add_argument("--max_model_len", type=int, default=16384,
-                        help="vLLM context window. See single-task help for details.")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--tensor_parallel", type=int, default=0)
-    parser.add_argument("--batch_size", type=int, default=8)
-    parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--num_samples", type=int, default=None)
+    _add_common_args(parser)
     args = parser.parse_args()
 
     if args.model is None:
@@ -633,7 +671,7 @@ def _multi_vllm(args, task_data: list[dict]):
     print(f"\n  Loading vLLM: model={args.model}, tp={tp}", flush=True)
     t_load = time.perf_counter()
 
-    llm = LLM(
+    llm_kwargs = dict(
         model=args.model,
         tensor_parallel_size=tp,
         max_model_len=args.max_model_len,
@@ -641,14 +679,19 @@ def _multi_vllm(args, task_data: list[dict]):
         dtype="bfloat16",
         seed=args.seed,
     )
+    if getattr(args, "gpu_memory_utilization", None) is not None:
+        llm_kwargs["gpu_memory_utilization"] = args.gpu_memory_utilization
+    llm = LLM(**llm_kwargs)
     tokenizer = llm.get_tokenizer()
+    enable_thinking = None if args.enable_thinking else False
     sampling_params = SamplingParams(
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         seed=args.seed,
     )
     print(f"  vLLM loaded in {time.perf_counter() - t_load:.1f}s "
-          f"(max_model_len={args.max_model_len})", flush=True)
+          f"(max_model_len={args.max_model_len}, "
+          f"thinking={'ON' if args.enable_thinking else 'OFF'})", flush=True)
 
     for task_idx, td in enumerate(task_data):
         remaining = td["remaining"]
@@ -667,8 +710,8 @@ def _multi_vllm(args, task_data: list[dict]):
         for s in remaining:
             raw = build_prompt(s, td["prompt_mode"])
             messages = [{"role": "user", "content": raw}]
-            text = tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True,
+            text = apply_chat_template_safe(
+                tokenizer, messages, enable_thinking=enable_thinking,
             )
             prompts.append(text)
 
@@ -681,7 +724,7 @@ def _multi_vllm(args, task_data: list[dict]):
                 record = {
                     "question_id": s["question_id"],
                     "role": s["role"],
-                    "prediction": out.outputs[0].text.strip(),
+                    "prediction": _strip_thinking(out.outputs[0].text.strip()),
                 }
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
@@ -723,6 +766,7 @@ def _multi_hf(args, task_data: list[dict]):
         trust_remote_code=True,
     )
     model.eval()
+    enable_thinking = None if args.enable_thinking else False
     print(f"  Model loaded in {time.perf_counter() - t_load:.1f}s", flush=True)
 
     for task_idx, td in enumerate(task_data):
@@ -751,8 +795,8 @@ def _multi_hf(args, task_data: list[dict]):
 
             messages_batch = [[{"role": "user", "content": p}] for p in prompts]
             texts = [
-                tokenizer.apply_chat_template(
-                    m, tokenize=False, add_generation_prompt=True,
+                apply_chat_template_safe(
+                    tokenizer, m, enable_thinking=enable_thinking,
                 )
                 for m in messages_batch
             ]
@@ -774,7 +818,9 @@ def _multi_hf(args, task_data: list[dict]):
 
             for s, ids in zip(batch, output_ids):
                 new_ids = ids[inputs["input_ids"].shape[1]:]
-                text = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+                text = _strip_thinking(
+                    tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+                )
                 record = {
                     "question_id": s["question_id"],
                     "role": s["role"],
@@ -821,6 +867,8 @@ def _save_meta_for_task(args, td: dict, infer_elapsed: float):
         "max_tokens": args.max_tokens,
         "seed": args.seed,
         "tensor_parallel": args.tensor_parallel,
+        "gpu_memory_utilization": getattr(args, "gpu_memory_utilization", None),
+        "enable_thinking": bool(getattr(args, "enable_thinking", False)),
         "total_samples": len(td["samples"]),
         "predicted_this_run": len(remaining),
         "data_path": tc["data"],

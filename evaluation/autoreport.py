@@ -51,6 +51,7 @@ import time
 from pathlib import Path
 
 from report import (
+    DEFAULT_JUDGE_MODELS,
     METHOD_LABELS,
     _NumpyEncoder,
     collect_experiment_scores,
@@ -61,6 +62,7 @@ from report import (
     generate_markdown,
     generate_token_stats_latex,
     generate_token_stats_markdown,
+    judge_scores_filename,
     print_report,
     print_token_stats,
 )
@@ -73,8 +75,36 @@ HYPERNET_METHOD_ORDER = [
 ]
 
 
-def discover_methods(results_dir: str, splits: list[str] | None = None) -> list[str]:
-    """Auto-discover methods that have at least one judge_scores.jsonl."""
+def _has_judge_scores(method_path: str, split: str | None, judge_models: list[str]) -> bool:
+    if split:
+        for model in judge_models:
+            judge_path = os.path.join(method_path, split, judge_scores_filename(model))
+            if os.path.exists(judge_path) and os.path.getsize(judge_path) > 0:
+                return True
+        return False
+
+    for model in judge_models:
+        judge_path = os.path.join(method_path, judge_scores_filename(model))
+        if os.path.exists(judge_path) and os.path.getsize(judge_path) > 0:
+            return True
+    for sub in os.listdir(method_path):
+        sub_path = os.path.join(method_path, sub)
+        if not os.path.isdir(sub_path):
+            continue
+        for model in judge_models:
+            judge_path = os.path.join(sub_path, judge_scores_filename(model))
+            if os.path.exists(judge_path) and os.path.getsize(judge_path) > 0:
+                return True
+    return False
+
+
+def discover_methods(
+    results_dir: str,
+    splits: list[str] | None = None,
+    judge_models: list[str] | None = None,
+) -> list[str]:
+    """Auto-discover methods that have at least one judge score file."""
+    judge_models = judge_models or DEFAULT_JUDGE_MODELS
     methods = []
     if not os.path.isdir(results_dir):
         return methods
@@ -91,20 +121,11 @@ def discover_methods(results_dir: str, splits: list[str] | None = None) -> list[
         has_scores = False
         if splits:
             for split in splits:
-                judge_path = os.path.join(entry_path, split, "judge_scores.jsonl")
-                if os.path.exists(judge_path) and os.path.getsize(judge_path) > 0:
+                if _has_judge_scores(entry_path, split, judge_models):
                     has_scores = True
                     break
-        else:
-            judge_flat = os.path.join(entry_path, "judge_scores.jsonl")
-            if os.path.exists(judge_flat) and os.path.getsize(judge_flat) > 0:
-                has_scores = True
-            else:
-                for sub in os.listdir(entry_path):
-                    judge_sub = os.path.join(entry_path, sub, "judge_scores.jsonl")
-                    if os.path.exists(judge_sub) and os.path.getsize(judge_sub) > 0:
-                        has_scores = True
-                        break
+        elif _has_judge_scores(entry_path, None, judge_models):
+            has_scores = True
 
         if has_scores:
             methods.append(entry)
@@ -128,8 +149,14 @@ def sort_methods(methods: list[str]) -> list[str]:
     return sorted(methods, key=sort_key)
 
 
-def get_method_mtime(results_dir: str, method: str, splits: list[str] | None) -> float:
+def get_method_mtime(
+    results_dir: str,
+    method: str,
+    splits: list[str] | None,
+    judge_models: list[str] | None = None,
+) -> float:
     """Get the most recent modification time of score files for a method."""
+    judge_models = judge_models or DEFAULT_JUDGE_MODELS
     latest = 0.0
     method_dir = os.path.join(results_dir, method)
     if not os.path.isdir(method_dir):
@@ -138,20 +165,21 @@ def get_method_mtime(results_dir: str, method: str, splits: list[str] | None) ->
     score_files = []
     if splits:
         for split in splits:
-            for fname in ("judge_scores.jsonl", "embedding_scores.jsonl"):
-                p = os.path.join(method_dir, split, fname)
-                if os.path.exists(p):
-                    score_files.append(p)
+            for model in judge_models:
+                score_files.append(
+                    os.path.join(method_dir, split, judge_scores_filename(model))
+                )
+            score_files.append(os.path.join(method_dir, split, "embedding_scores.jsonl"))
     else:
-        for fname in ("judge_scores.jsonl", "embedding_scores.jsonl"):
-            p = os.path.join(method_dir, fname)
-            if os.path.exists(p):
-                score_files.append(p)
+        for model in judge_models:
+            score_files.append(os.path.join(method_dir, judge_scores_filename(model)))
+        score_files.append(os.path.join(method_dir, "embedding_scores.jsonl"))
 
     for p in score_files:
-        mt = os.path.getmtime(p)
-        if mt > latest:
-            latest = mt
+        if os.path.exists(p):
+            mt = os.path.getmtime(p)
+            if mt > latest:
+                latest = mt
 
     return latest
 
@@ -173,12 +201,14 @@ def needs_update(
     discovered_methods: list[str],
     existing_summary: dict | None,
     splits: list[str] | None,
+    judge_models: list[str] | None = None,
     force: bool = False,
 ) -> tuple[bool, list[str], list[str]]:
     """Determine if an update is needed.
 
     Returns (needs_update, new_methods, stale_methods).
     """
+    judge_models = judge_models or DEFAULT_JUDGE_MODELS
     if force or existing_summary is None:
         return True, discovered_methods, []
 
@@ -191,9 +221,13 @@ def needs_update(
     stale_methods = []
     for m in discovered_methods:
         if m in existing_methods:
-            method_mtime = get_method_mtime(results_dir, m, splits)
+            method_mtime = get_method_mtime(results_dir, m, splits, judge_models)
             if method_mtime > summary_mtime:
                 stale_methods.append(m)
+
+    existing_judges = set(existing_summary.get("judge_models", ["gpt-4.1"]))
+    if set(judge_models) - existing_judges:
+        return True, new_methods, stale_methods
 
     if new_methods or stale_methods:
         return True, new_methods, stale_methods
@@ -242,12 +276,17 @@ def main():
         help="Force full recomputation even if summary.json exists and is fresh",
     )
     parser.add_argument(
+        "--judge_models", nargs="*", default=None,
+        help="Judge models to include (default: gpt-4.1 glm-5.2 deepseek-v4-flash)",
+    )
+    parser.add_argument(
         "--quiet", action="store_true",
         help="Suppress console output",
     )
     args = parser.parse_args()
 
     per_character = not args.no_per_character
+    judge_models = args.judge_models if args.judge_models else DEFAULT_JUDGE_MODELS
 
     # Auto-detect splits if not provided
     splits = args.splits
@@ -260,8 +299,8 @@ def main():
                     continue
                 for sub in os.listdir(full_path):
                     sub_path = os.path.join(full_path, sub)
-                    if os.path.isdir(sub_path) and os.path.exists(
-                        os.path.join(sub_path, "judge_scores.jsonl")
+                    if os.path.isdir(sub_path) and _has_judge_scores(
+                        full_path, sub, judge_models
                     ):
                         splits_candidates.add(sub)
         if splits_candidates:
@@ -270,7 +309,7 @@ def main():
                 print(f"  Auto-detected splits: {splits}")
 
     # Discover methods
-    discovered = discover_methods(args.results_dir, splits)
+    discovered = discover_methods(args.results_dir, splits, judge_models=judge_models)
     if not discovered:
         print("ERROR: No methods with scored results found in", args.results_dir)
         return
@@ -278,11 +317,13 @@ def main():
     discovered = sort_methods(discovered)
     if not args.quiet:
         print(f"  Discovered methods: {discovered}")
+        print(f"  Judge models: {judge_models}")
 
     # Check existing summary for incremental logic
     existing_summary = load_existing_summary(args.results_dir)
     update_needed, new_methods, stale_methods = needs_update(
-        args.results_dir, discovered, existing_summary, splits, force=args.force
+        args.results_dir, discovered, existing_summary, splits,
+        judge_models=judge_models, force=args.force,
     )
 
     if not update_needed:
@@ -306,7 +347,8 @@ def main():
 
     # Full recomputation with all discovered methods
     report = compute_report(
-        args.results_dir, discovered, baseline, splits=splits
+        args.results_dir, discovered, baseline, splits=splits,
+        judge_models=judge_models,
     )
     if not report:
         print("ERROR: compute_report returned empty.")
@@ -319,6 +361,7 @@ def main():
         "methods": discovered,
         "splits": splits,
         "baseline": baseline,
+        "judge_models": judge_models,
         "incremental_from": (
             existing_summary.get("_meta", {}).get("generated_at")
             if existing_summary else None

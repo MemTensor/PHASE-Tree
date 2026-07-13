@@ -27,6 +27,7 @@ Usage::
 import argparse
 import json
 import os
+import re
 from collections import defaultdict
 
 import numpy as np
@@ -56,6 +57,21 @@ METHOD_LABELS = {
     "m5_dynamic_tree": "Dynamic-Tree",
     "m6_phase_tree": "PHASE-Tree (ours)",
 }
+
+DEFAULT_JUDGE_MODELS = ["gpt-4.1", "glm-5.2", "deepseek-v4-flash"]
+
+JUDGE_MODEL_LABELS = {
+    "gpt-4.1": "GPT-4.1",
+    "glm-5.2": "GLM-5.2",
+    "deepseek-v4-flash": "DeepSeek-V4-Flash",
+}
+
+
+def judge_scores_filename(model: str) -> str:
+    if model == "gpt-4.1":
+        return "judge_scores.jsonl"
+    safe = re.sub(r"[^\w.-]+", "_", model)
+    return f"judge_scores_{safe}.jsonl"
 
 
 # ---------------------------------------------------------------------------
@@ -128,27 +144,32 @@ def effect_size_cohen_d(a: list[float], b: list[float]) -> float:
 # Collect scores
 # ---------------------------------------------------------------------------
 
-def collect_experiment_scores(exp_dir: str, splits: list[str] | None = None) -> dict:
+def collect_experiment_scores(
+    exp_dir: str,
+    splits: list[str] | None = None,
+    judge_model: str = "gpt-4.1",
+) -> dict:
     """Return {question_id: {role, character_score, semantic_score, embedding_similarity, split}}.
 
     Supports two directory layouts:
-      1. Split-based: <exp_dir>/<split>/judge_scores.jsonl  (new)
-      2. Flat:        <exp_dir>/judge_scores.jsonl          (legacy)
+      1. Split-based: <exp_dir>/<split>/judge_scores*.jsonl  (new)
+      2. Flat:        <exp_dir>/judge_scores*.jsonl          (legacy)
     """
+    judge_fname = judge_scores_filename(judge_model)
     judge = {}
     embed = {}
 
     if splits:
         for split in splits:
             split_dir = os.path.join(exp_dir, split)
-            for r in load_jsonl(os.path.join(split_dir, "judge_scores.jsonl")):
+            for r in load_jsonl(os.path.join(split_dir, judge_fname)):
                 r["split"] = split
                 judge[r["question_id"]] = r
             for r in load_jsonl(os.path.join(split_dir, "embedding_scores.jsonl")):
                 embed[r["question_id"]] = r
 
     if not judge:
-        for r in load_jsonl(os.path.join(exp_dir, "judge_scores.jsonl")):
+        for r in load_jsonl(os.path.join(exp_dir, judge_fname)):
             judge[r["question_id"]] = r
         for r in load_jsonl(os.path.join(exp_dir, "embedding_scores.jsonl")):
             embed[r["question_id"]] = r
@@ -171,23 +192,11 @@ def collect_experiment_scores(exp_dir: str, splits: list[str] | None = None) -> 
 # Report computation
 # ---------------------------------------------------------------------------
 
-def compute_report(
-    results_dir: str,
-    experiment_names: list[str],
+def _build_report_from_scores(
+    all_scores: dict[str, dict],
     baseline_name: str,
-    splits: list[str] | None = None,
 ) -> dict:
-    all_scores: dict[str, dict] = {}
-    for name in experiment_names:
-        exp_dir = os.path.join(results_dir, name)
-        scores = collect_experiment_scores(exp_dir, splits)
-        if scores:
-            all_scores[name] = scores
-        else:
-            print(f"  WARNING: No scores for experiment '{name}'")
-
     if not all_scores:
-        print("ERROR: No experiment scores found.")
         return {}
 
     # --- Per-experiment summary with CI ---
@@ -312,6 +321,45 @@ def compute_report(
     }
 
 
+def compute_report(
+    results_dir: str,
+    experiment_names: list[str],
+    baseline_name: str,
+    splits: list[str] | None = None,
+    judge_models: list[str] | None = None,
+) -> dict:
+    judge_models = judge_models or DEFAULT_JUDGE_MODELS
+    judges: dict[str, dict] = {}
+
+    for judge_model in judge_models:
+        all_scores: dict[str, dict] = {}
+        for name in experiment_names:
+            exp_dir = os.path.join(results_dir, name)
+            scores = collect_experiment_scores(exp_dir, splits, judge_model=judge_model)
+            if scores:
+                all_scores[name] = scores
+            elif judge_model == judge_models[0]:
+                print(f"  WARNING: No scores for experiment '{name}'")
+
+        if not all_scores:
+            continue
+
+        judges[judge_model] = _build_report_from_scores(all_scores, baseline_name)
+
+    if not judges:
+        print("ERROR: No experiment scores found.")
+        return {}
+
+    primary = judges.get("gpt-4.1") or next(iter(judges.values()))
+    result = {
+        "baseline": baseline_name,
+        "judge_models": list(judges.keys()),
+        "judges": judges,
+    }
+    result.update(primary)
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Markdown report
 # ---------------------------------------------------------------------------
@@ -336,23 +384,13 @@ def _sig_marker(p_val) -> str:
     return ""
 
 
-def generate_markdown(report: dict, experiment_names: list[str],
-                      per_character: bool = False) -> str:
-    lines = []
-    baseline_name = report["baseline"]
-    summary = report.get("experiment_summary", {})
-    comparisons = report.get("vs_baseline", {})
-
-    from datetime import datetime
-    lines.append("# Evaluation Report\n")
-    lines.append(f"- **Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    lines.append(f"- **Baseline**: {METHOD_LABELS.get(baseline_name, baseline_name)}")
-    lines.append(f"- **Methods**: {len(experiment_names)}")
-    total_n = sum(s.get("n", 0) for s in summary.values())
-    lines.append(f"- **Total samples**: {total_n}\n")
-
-    # --- Main results table ---
-    lines.append("## Main Results (mean with 95% CI)\n")
+def _append_main_results_md(
+    lines: list[str],
+    summary: dict,
+    experiment_names: list[str],
+    heading: str = "## Main Results (mean with 95% CI)\n",
+) -> None:
+    lines.append(heading)
     lines.append("| Method | N | Character ↑ | Semantic ↑ | Embedding ↑ |")
     lines.append("|--------|--:|:-----------:|:----------:|:-----------:|")
     for name in experiment_names:
@@ -366,42 +404,138 @@ def generate_markdown(report: dict, experiment_names: list[str],
         lines.append(f"| {label} | {s['n']} | {char_str} | {sem_str} | {emb_str} |")
     lines.append("")
 
-    # --- Delta table ---
-    if comparisons:
-        lines.append(f"## Δ vs Baseline ({METHOD_LABELS.get(baseline_name, baseline_name)})\n")
-        lines.append("| Method | Δ Char | Δ Sem | Δ Emb | Cohen's d (Char) | p-value |")
-        lines.append("|--------|-------:|------:|------:|-----------------:|--------:|")
-        for name in experiment_names:
-            c = comparisons.get(name)
-            if not c:
-                continue
-            label = METHOD_LABELS.get(name, name)
-            dc = c["character"]["delta"]
-            ds = c["semantic"]["delta"]
-            de = c["embedding"]["delta"]
-            cd = c["character"]["cohen_d"]
-            p = c["character"]["stat"]["ttest_p"]
-            sig = _sig_marker(p)
-            lines.append(f"| {label} | {dc:+.3f} | {ds:+.3f} | {de:+.4f} | {cd:.3f} | {p:.4f}{sig} |")
-        lines.append("")
 
-        # --- Win rate ---
-        lines.append(f"## Win Rate vs Baseline\n")
-        lines.append("| Method | Metric | Win | Tie | Loss | Win% |")
-        lines.append("|--------|--------|----:|----:|-----:|-----:|")
-        for name in experiment_names:
-            c = comparisons.get(name)
-            if not c:
-                continue
-            label = METHOD_LABELS.get(name, name)
-            for metric_key, metric_label in [("character", "Character"), ("semantic", "Semantic"), ("embedding", "Embedding")]:
-                w = c[metric_key]["winrate"]
-                lines.append(f"| {label} | {metric_label} | {w['win']} | {w['tie']} | {w['loss']} | {w['win_pct']:.1f}% |")
-        lines.append("")
+def _append_delta_md(
+    lines: list[str],
+    comparisons: dict,
+    experiment_names: list[str],
+    baseline_name: str,
+    heading: str | None = None,
+) -> None:
+    if not comparisons:
+        return
+    if heading is None:
+        heading = (
+            f"## Δ vs Baseline ({METHOD_LABELS.get(baseline_name, baseline_name)})\n"
+        )
+    lines.append(heading)
+    lines.append("| Method | Δ Char | Δ Sem | Δ Emb | Cohen's d (Char) | p-value |")
+    lines.append("|--------|-------:|------:|------:|-----------------:|--------:|")
+    for name in experiment_names:
+        c = comparisons.get(name)
+        if not c:
+            continue
+        label = METHOD_LABELS.get(name, name)
+        dc = c["character"]["delta"]
+        ds = c["semantic"]["delta"]
+        de = c["embedding"]["delta"]
+        cd = c["character"]["cohen_d"]
+        p = c["character"]["stat"]["ttest_p"]
+        sig = _sig_marker(p)
+        lines.append(f"| {label} | {dc:+.3f} | {ds:+.3f} | {de:+.4f} | {cd:.3f} | {p:.4f}{sig} |")
+    lines.append("")
 
-    # --- Per-character breakdown ---
-    if per_character and report.get("per_character"):
-        per_char_data = report["per_character"]
+
+def _append_winrate_md(
+    lines: list[str],
+    comparisons: dict,
+    experiment_names: list[str],
+    heading: str = "## Win Rate vs Baseline\n",
+) -> None:
+    if not comparisons:
+        return
+    lines.append(heading)
+    lines.append("| Method | Metric | Win | Tie | Loss | Win% |")
+    lines.append("|--------|--------|----:|----:|-----:|-----:|")
+    for name in experiment_names:
+        c = comparisons.get(name)
+        if not c:
+            continue
+        label = METHOD_LABELS.get(name, name)
+        for metric_key, metric_label in [
+            ("character", "Character"),
+            ("semantic", "Semantic"),
+            ("embedding", "Embedding"),
+        ]:
+            w = c[metric_key]["winrate"]
+            lines.append(
+                f"| {label} | {metric_label} | {w['win']} | {w['tie']} | "
+                f"{w['loss']} | {w['win_pct']:.1f}% |"
+            )
+    lines.append("")
+
+
+def _iter_judge_reports(report: dict) -> list[tuple[str, dict]]:
+    judges = report.get("judges")
+    if judges:
+        order = report.get("judge_models", list(judges.keys()))
+        seen = set()
+        items = []
+        for model in order:
+            if model in judges and model not in seen:
+                items.append((model, judges[model]))
+                seen.add(model)
+        for model, data in judges.items():
+            if model not in seen:
+                items.append((model, data))
+        return items
+    return [("gpt-4.1", report)]
+
+
+def generate_markdown(report: dict, experiment_names: list[str],
+                      per_character: bool = False) -> str:
+    lines = []
+    baseline_name = report["baseline"]
+    judge_reports = _iter_judge_reports(report)
+    multi_judge = len(judge_reports) > 1
+
+    from datetime import datetime
+    lines.append("# Evaluation Report\n")
+    lines.append(f"- **Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lines.append(f"- **Baseline**: {METHOD_LABELS.get(baseline_name, baseline_name)}")
+    lines.append(f"- **Methods**: {len(experiment_names)}")
+    if multi_judge:
+        judge_labels = [
+            JUDGE_MODEL_LABELS.get(m, m) for m, _ in judge_reports
+        ]
+        lines.append(f"- **Judge models**: {', '.join(judge_labels)}")
+
+    primary_summary = judge_reports[0][1].get("experiment_summary", {})
+    total_n = sum(s.get("n", 0) for s in primary_summary.values())
+    lines.append(f"- **Total samples**: {total_n}\n")
+
+    for judge_model, judge_data in judge_reports:
+        judge_label = JUDGE_MODEL_LABELS.get(judge_model, judge_model)
+        summary = judge_data.get("experiment_summary", {})
+        comparisons = judge_data.get("vs_baseline", {})
+
+        if multi_judge:
+            lines.append(f"---\n")
+            lines.append(f"## {judge_label}\n")
+            _append_main_results_md(
+                lines, summary, experiment_names,
+                heading="### Main Results (mean with 95% CI)\n",
+            )
+            _append_delta_md(
+                lines, comparisons, experiment_names, baseline_name,
+                heading=(
+                    f"### Δ vs Baseline "
+                    f"({METHOD_LABELS.get(baseline_name, baseline_name)})\n"
+                ),
+            )
+            _append_winrate_md(
+                lines, comparisons, experiment_names,
+                heading="### Win Rate vs Baseline\n",
+            )
+        else:
+            _append_main_results_md(lines, summary, experiment_names)
+            _append_delta_md(lines, comparisons, experiment_names, baseline_name)
+            _append_winrate_md(lines, comparisons, experiment_names)
+
+    # --- Per-character breakdown (primary judge only) ---
+    primary_report = judge_reports[0][1]
+    if per_character and primary_report.get("per_character"):
+        per_char_data = primary_report["per_character"]
         all_roles = sorted(set(
             role for exp_data in per_char_data.values() for role in exp_data
         ))
@@ -428,110 +562,119 @@ def generate_markdown(report: dict, experiment_names: list[str],
 
 def generate_latex(report: dict, experiment_names: list[str]) -> str:
     lines = []
-    summary = report.get("experiment_summary", {})
-    comparisons = report.get("vs_baseline", {})
+    judge_reports = _iter_judge_reports(report)
     baseline_name = report["baseline"]
 
-    # ---- Table 1: Main results with CI ----
-    lines.append(r"\begin{table}[t]")
-    lines.append(r"\centering")
-    lines.append(r"\small")
-    lines.append(r"\caption{Main results on the evaluation set. "
-                 r"Scores are reported as mean$_{\pm \text{95\% CI}}$. "
-                 r"$\uparrow$ indicates higher is better. "
-                 r"Best results in \textbf{bold}. "
-                 r"Significance vs.\ baseline: "
-                 r"\textsuperscript{*} $p<.05$, "
-                 r"\textsuperscript{**} $p<.01$, "
-                 r"\textsuperscript{***} $p<.001$ (paired $t$-test).}")
-    lines.append(r"\label{tab:main_results}")
-    lines.append(r"\begin{tabular}{l c c c}")
-    lines.append(r"\toprule")
-    lines.append(r"\textbf{Method} & \textbf{Char.\,$\uparrow$} "
-                 r"& \textbf{Sem.\,$\uparrow$} & \textbf{Emb.\,$\uparrow$} \\")
-    lines.append(r"\midrule")
+    for idx, (judge_model, judge_data) in enumerate(judge_reports):
+        summary = judge_data.get("experiment_summary", {})
+        comparisons = judge_data.get("vs_baseline", {})
+        judge_label = JUDGE_MODEL_LABELS.get(judge_model, judge_model).replace("_", r"\_")
+        suffix = f" ({judge_label})" if len(judge_reports) > 1 else ""
 
-    char_vals = {n: summary[n]["character"]["mean"] for n in experiment_names if n in summary}
-    sem_vals = {n: summary[n]["semantic"]["mean"] for n in experiment_names if n in summary}
-    emb_vals = {n: summary[n]["embedding"]["mean"] for n in experiment_names if n in summary}
-    best_char = max(char_vals.values()) if char_vals else 0
-    best_sem = max(sem_vals.values()) if sem_vals else 0
-    best_emb = max(emb_vals.values()) if emb_vals else 0
-
-    for name in experiment_names:
-        s = summary.get(name)
-        if not s:
-            continue
-        label = METHOD_LABELS.get(name, name).replace("_", r"\_")
-
-        c = comparisons.get(name, {})
-        char_sig = _sig_marker(c.get("character", {}).get("stat", {}).get("ttest_p")) if c else ""
-        sem_sig = _sig_marker(c.get("semantic", {}).get("stat", {}).get("ttest_p")) if c else ""
-        emb_sig = _sig_marker(c.get("embedding", {}).get("stat", {}).get("ttest_p")) if c else ""
-
-        char_m = s["character"]["mean"]
-        sem_m = s["semantic"]["mean"]
-        emb_m = s["embedding"]["mean"]
-        char_ci = s["character"]["ci_hi"] - char_m
-        sem_ci = s["semantic"]["ci_hi"] - sem_m
-        emb_ci = s["embedding"]["ci_hi"] - emb_m
-
-        char_str = f"{char_m:.2f}$_{{\\pm {char_ci:.2f}}}${char_sig}"
-        sem_str = f"{sem_m:.2f}$_{{\\pm {sem_ci:.2f}}}${sem_sig}"
-        emb_str = f"{emb_m:.3f}$_{{\\pm {emb_ci:.3f}}}${emb_sig}"
-
-        if abs(char_m - best_char) < 1e-4:
-            char_str = r"\textbf{" + char_str + "}"
-        if abs(sem_m - best_sem) < 1e-4:
-            sem_str = r"\textbf{" + sem_str + "}"
-        if abs(emb_m - best_emb) < 1e-5:
-            emb_str = r"\textbf{" + emb_str + "}"
-
-        lines.append(f"{label} & {char_str} & {sem_str} & {emb_str} \\\\")
-
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
-    lines.append(r"\end{table}")
-    lines.append("")
-
-    # ---- Table 2: Effect sizes and significance ----
-    if comparisons:
         lines.append(r"\begin{table}[t]")
         lines.append(r"\centering")
         lines.append(r"\small")
-        bl_label = METHOD_LABELS.get(baseline_name, baseline_name).replace("_", r"\_")
-        lines.append(r"\caption{Pairwise comparison vs.\ " + bl_label +
-                     r". $\Delta$: improvement over baseline. " +
-                     r"$d$: Cohen's $d$ effect size.}")
-        lines.append(r"\label{tab:pairwise}")
-        lines.append(r"\begin{tabular}{l r r r r r}")
+        lines.append(
+            r"\caption{Main results on the evaluation set"
+            + suffix
+            + r". "
+            r"Scores are reported as mean$_{\pm \text{95\% CI}}$. "
+            r"$\uparrow$ indicates higher is better. "
+            r"Best results in \textbf{bold}. "
+            r"Significance vs.\ baseline: "
+            r"\textsuperscript{*} $p<.05$, "
+            r"\textsuperscript{**} $p<.01$, "
+            r"\textsuperscript{***} $p<.001$ (paired $t$-test).}"
+        )
+        lines.append(rf"\label{{tab:main_results_{idx}}}")
+        lines.append(r"\begin{tabular}{l c c c}")
         lines.append(r"\toprule")
-        lines.append(r"\textbf{Method} & \textbf{$\Delta$Char.} & \textbf{$\Delta$Sem.} "
-                     r"& \textbf{$\Delta$Emb.} & \textbf{$d$ (Char.)} & \textbf{$p$-value} \\")
+        lines.append(r"\textbf{Method} & \textbf{Char.\,$\uparrow$} "
+                     r"& \textbf{Sem.\,$\uparrow$} & \textbf{Emb.\,$\uparrow$} \\")
         lines.append(r"\midrule")
 
+        char_vals = {n: summary[n]["character"]["mean"] for n in experiment_names if n in summary}
+        sem_vals = {n: summary[n]["semantic"]["mean"] for n in experiment_names if n in summary}
+        emb_vals = {n: summary[n]["embedding"]["mean"] for n in experiment_names if n in summary}
+        best_char = max(char_vals.values()) if char_vals else 0
+        best_sem = max(sem_vals.values()) if sem_vals else 0
+        best_emb = max(emb_vals.values()) if emb_vals else 0
+
         for name in experiment_names:
-            c = comparisons.get(name)
-            if not c:
+            s = summary.get(name)
+            if not s:
                 continue
             label = METHOD_LABELS.get(name, name).replace("_", r"\_")
-            dc = c["character"]["delta"]
-            ds = c["semantic"]["delta"]
-            de = c["embedding"]["delta"]
-            cd = c["character"]["cohen_d"]
-            p = c["character"]["stat"]["ttest_p"]
-            sig = _sig_marker(p)
 
-            p_str = f"${p:.4f}$" if p >= 0.001 else f"$<.001$"
-            if sig:
-                p_str += r"\textsuperscript{" + sig + "}"
+            c = comparisons.get(name, {})
+            char_sig = _sig_marker(c.get("character", {}).get("stat", {}).get("ttest_p")) if c else ""
+            sem_sig = _sig_marker(c.get("semantic", {}).get("stat", {}).get("ttest_p")) if c else ""
+            emb_sig = _sig_marker(c.get("embedding", {}).get("stat", {}).get("ttest_p")) if c else ""
 
-            lines.append(f"{label} & {dc:+.3f} & {ds:+.3f} & {de:+.4f} "
-                         f"& {cd:.3f} & {p_str} \\\\")
+            char_m = s["character"]["mean"]
+            sem_m = s["semantic"]["mean"]
+            emb_m = s["embedding"]["mean"]
+            char_ci = s["character"]["ci_hi"] - char_m
+            sem_ci = s["semantic"]["ci_hi"] - sem_m
+            emb_ci = s["embedding"]["ci_hi"] - emb_m
+
+            char_str = f"{char_m:.2f}$_{{\\pm {char_ci:.2f}}}${char_sig}"
+            sem_str = f"{sem_m:.2f}$_{{\\pm {sem_ci:.2f}}}${sem_sig}"
+            emb_str = f"{emb_m:.3f}$_{{\\pm {emb_ci:.3f}}}${emb_sig}"
+
+            if abs(char_m - best_char) < 1e-4:
+                char_str = r"\textbf{" + char_str + "}"
+            if abs(sem_m - best_sem) < 1e-4:
+                sem_str = r"\textbf{" + sem_str + "}"
+            if abs(emb_m - best_emb) < 1e-5:
+                emb_str = r"\textbf{" + emb_str + "}"
+
+            lines.append(f"{label} & {char_str} & {sem_str} & {emb_str} \\\\")
 
         lines.append(r"\bottomrule")
         lines.append(r"\end{tabular}")
         lines.append(r"\end{table}")
+        lines.append("")
+
+        if comparisons:
+            lines.append(r"\begin{table}[t]")
+            lines.append(r"\centering")
+            lines.append(r"\small")
+            bl_label = METHOD_LABELS.get(baseline_name, baseline_name).replace("_", r"\_")
+            lines.append(
+                r"\caption{Pairwise comparison vs.\ " + bl_label + suffix +
+                r". $\Delta$: improvement over baseline. " +
+                r"$d$: Cohen's $d$ effect size.}"
+            )
+            lines.append(rf"\label{{tab:pairwise_{idx}}}")
+            lines.append(r"\begin{tabular}{l r r r r r}")
+            lines.append(r"\toprule")
+            lines.append(r"\textbf{Method} & \textbf{$\Delta$Char.} & \textbf{$\Delta$Sem.} "
+                         r"& \textbf{$\Delta$Emb.} & \textbf{$d$ (Char.)} & \textbf{$p$-value} \\")
+            lines.append(r"\midrule")
+
+            for name in experiment_names:
+                c = comparisons.get(name)
+                if not c:
+                    continue
+                label = METHOD_LABELS.get(name, name).replace("_", r"\_")
+                dc = c["character"]["delta"]
+                ds = c["semantic"]["delta"]
+                de = c["embedding"]["delta"]
+                cd = c["character"]["cohen_d"]
+                p = c["character"]["stat"]["ttest_p"]
+                sig = _sig_marker(p)
+
+                p_str = f"${p:.4f}$" if p >= 0.001 else f"$<.001$"
+                if sig:
+                    p_str += r"\textsuperscript{" + sig + "}"
+
+                lines.append(f"{label} & {dc:+.3f} & {ds:+.3f} & {de:+.4f} "
+                             f"& {cd:.3f} & {p_str} \\\\")
+
+            lines.append(r"\bottomrule")
+            lines.append(r"\end{tabular}")
+            lines.append(r"\end{table}")
 
     return "\n".join(lines)
 
@@ -542,96 +685,108 @@ def generate_latex(report: dict, experiment_names: list[str]) -> str:
 
 def print_report(report: dict, experiment_names: list[str],
                  per_character: bool = False):
-    summary = report.get("experiment_summary", {})
-    comparisons = report.get("vs_baseline", {})
     baseline_name = report["baseline"]
-
+    judge_reports = _iter_judge_reports(report)
     W = 82
 
     print(f"\n{'═' * W}")
     print(f"  EVALUATION REPORT")
     print(f"  Baseline: {METHOD_LABELS.get(baseline_name, baseline_name)}")
+    if len(judge_reports) > 1:
+        judge_labels = [JUDGE_MODEL_LABELS.get(m, m) for m, _ in judge_reports]
+        print(f"  Judges: {', '.join(judge_labels)}")
     print(f"{'═' * W}")
 
-    # --- Main table with CI ---
-    print(f"\n{'─' * W}")
-    print(f"  {'Method':<28} {'N':>5}  {'Character ↑':>16}  "
-          f"{'Semantic ↑':>16}  {'Embedding ↑':>16}")
-    print(f"{'─' * W}")
-    for name in experiment_names:
-        s = summary.get(name)
-        if not s:
-            continue
-        label = METHOD_LABELS.get(name, name)[:28]
-        c_ci = f"{s['character']['mean']:.3f}±{s['character']['ci_hi'] - s['character']['mean']:.3f}"
-        s_ci = f"{s['semantic']['mean']:.3f}±{s['semantic']['ci_hi'] - s['semantic']['mean']:.3f}"
-        e_ci = f"{s['embedding']['mean']:.4f}±{s['embedding']['ci_hi'] - s['embedding']['mean']:.4f}"
-        print(f"  {label:<28} {s['n']:>5}  {c_ci:>16}  {s_ci:>16}  {e_ci:>16}")
-    print(f"{'─' * W}")
+    for judge_model, judge_data in judge_reports:
+        summary = judge_data.get("experiment_summary", {})
+        comparisons = judge_data.get("vs_baseline", {})
+        judge_label = JUDGE_MODEL_LABELS.get(judge_model, judge_model)
 
-    # --- Per-split table ---
-    per_split = report.get("per_split", {})
-    if per_split:
-        for split_name, split_data in sorted(per_split.items()):
-            print(f"\n  [{split_name}]")
-            print(f"  {'Method':<28} {'N':>5}  {'Character ↑':>16}  "
-                  f"{'Semantic ↑':>16}  {'Embedding ↑':>16}")
+        if len(judge_reports) > 1:
+            print(f"\n{'─' * W}")
+            print(f"  Judge: {judge_label}")
+            print(f"{'─' * W}")
+
+        # --- Main table with CI ---
+        print(f"\n{'─' * W}")
+        print(f"  {'Method':<28} {'N':>5}  {'Character ↑':>16}  "
+              f"{'Semantic ↑':>16}  {'Embedding ↑':>16}")
+        print(f"{'─' * W}")
+        for name in experiment_names:
+            s = summary.get(name)
+            if not s:
+                continue
+            label = METHOD_LABELS.get(name, name)[:28]
+            c_ci = f"{s['character']['mean']:.3f}±{s['character']['ci_hi'] - s['character']['mean']:.3f}"
+            s_ci = f"{s['semantic']['mean']:.3f}±{s['semantic']['ci_hi'] - s['semantic']['mean']:.3f}"
+            e_ci = f"{s['embedding']['mean']:.4f}±{s['embedding']['ci_hi'] - s['embedding']['mean']:.4f}"
+            print(f"  {label:<28} {s['n']:>5}  {c_ci:>16}  {s_ci:>16}  {e_ci:>16}")
+        print(f"{'─' * W}")
+
+        # --- Per-split table ---
+        per_split = judge_data.get("per_split", {})
+        if per_split:
+            for split_name, split_data in sorted(per_split.items()):
+                print(f"\n  [{split_name}]")
+                print(f"  {'Method':<28} {'N':>5}  {'Character ↑':>16}  "
+                      f"{'Semantic ↑':>16}  {'Embedding ↑':>16}")
+                for name in experiment_names:
+                    s = split_data.get(name)
+                    if not s:
+                        continue
+                    label = METHOD_LABELS.get(name, name)[:28]
+                    c_ci = f"{s['character']['mean']:.3f}±{s['character']['ci_hi'] - s['character']['mean']:.3f}"
+                    s_ci = f"{s['semantic']['mean']:.3f}±{s['semantic']['ci_hi'] - s['semantic']['mean']:.3f}"
+                    e_ci = f"{s['embedding']['mean']:.4f}±{s['embedding']['ci_hi'] - s['embedding']['mean']:.4f}"
+                    print(f"  {label:<28} {s['n']:>5}  {c_ci:>16}  {s_ci:>16}  {e_ci:>16}")
+            print(f"{'─' * W}")
+
+        # --- Delta table ---
+        if comparisons:
+            print(f"\n  Δ vs {METHOD_LABELS.get(baseline_name, baseline_name)}")
+            print(f"{'─' * W}")
+            print(f"  {'Method':<28} {'ΔChar':>7} {'ΔSem':>7} {'ΔEmb':>8}"
+                  f"  {'d(C)':>6} {'d(S)':>6} {'d(E)':>6}  {'p(C)':>10}")
+            print(f"{'─' * W}")
             for name in experiment_names:
-                s = split_data.get(name)
-                if not s:
+                c = comparisons.get(name)
+                if not c:
                     continue
                 label = METHOD_LABELS.get(name, name)[:28]
-                c_ci = f"{s['character']['mean']:.3f}±{s['character']['ci_hi'] - s['character']['mean']:.3f}"
-                s_ci = f"{s['semantic']['mean']:.3f}±{s['semantic']['ci_hi'] - s['semantic']['mean']:.3f}"
-                e_ci = f"{s['embedding']['mean']:.4f}±{s['embedding']['ci_hi'] - s['embedding']['mean']:.4f}"
-                print(f"  {label:<28} {s['n']:>5}  {c_ci:>16}  {s_ci:>16}  {e_ci:>16}")
-        print(f"{'─' * W}")
+                dc = c["character"]["delta"]
+                ds = c["semantic"]["delta"]
+                de = c["embedding"]["delta"]
+                d_c = c["character"]["cohen_d"]
+                d_s = c["semantic"]["cohen_d"]
+                d_e = c["embedding"]["cohen_d"]
+                p = c["character"]["stat"]["ttest_p"]
+                sig = _sig_marker(p)
+                print(f"  {label:<28} {dc:>+7.3f} {ds:>+7.3f} {de:>+8.4f}"
+                      f"  {d_c:>6.3f} {d_s:>6.3f} {d_e:>6.3f}  {p:>7.4f}{sig}")
+            print(f"{'─' * W}")
 
-    # --- Delta table ---
-    if comparisons:
-        print(f"\n  Δ vs {METHOD_LABELS.get(baseline_name, baseline_name)}")
-        print(f"{'─' * W}")
-        print(f"  {'Method':<28} {'ΔChar':>7} {'ΔSem':>7} {'ΔEmb':>8}"
-              f"  {'d(C)':>6} {'d(S)':>6} {'d(E)':>6}  {'p(C)':>10}")
-        print(f"{'─' * W}")
-        for name in experiment_names:
-            c = comparisons.get(name)
-            if not c:
-                continue
-            label = METHOD_LABELS.get(name, name)[:28]
-            dc = c["character"]["delta"]
-            ds = c["semantic"]["delta"]
-            de = c["embedding"]["delta"]
-            d_c = c["character"]["cohen_d"]
-            d_s = c["semantic"]["cohen_d"]
-            d_e = c["embedding"]["cohen_d"]
-            p = c["character"]["stat"]["ttest_p"]
-            sig = _sig_marker(p)
-            print(f"  {label:<28} {dc:>+7.3f} {ds:>+7.3f} {de:>+8.4f}"
-                  f"  {d_c:>6.3f} {d_s:>6.3f} {d_e:>6.3f}  {p:>7.4f}{sig}")
-        print(f"{'─' * W}")
+            # --- Win rate ---
+            print(f"\n  Win / Tie / Loss vs Baseline (Character score)")
+            print(f"{'─' * W}")
+            print(f"  {'Method':<28} {'Win':>5} {'Tie':>5} {'Loss':>5}  {'Win%':>6}  "
+                  f"{'Sem Win%':>8}  {'Emb Win%':>8}")
+            print(f"{'─' * W}")
+            for name in experiment_names:
+                c = comparisons.get(name)
+                if not c:
+                    continue
+                label = METHOD_LABELS.get(name, name)[:28]
+                wc = c["character"]["winrate"]
+                ws = c["semantic"]["winrate"]
+                we = c["embedding"]["winrate"]
+                print(f"  {label:<28} {wc['win']:>5} {wc['tie']:>5} {wc['loss']:>5}"
+                      f"  {wc['win_pct']:>5.1f}%  {ws['win_pct']:>7.1f}%  {we['win_pct']:>7.1f}%")
+            print(f"{'─' * W}")
 
-        # --- Win rate ---
-        print(f"\n  Win / Tie / Loss vs Baseline (Character score)")
-        print(f"{'─' * W}")
-        print(f"  {'Method':<28} {'Win':>5} {'Tie':>5} {'Loss':>5}  {'Win%':>6}  "
-              f"{'Sem Win%':>8}  {'Emb Win%':>8}")
-        print(f"{'─' * W}")
-        for name in experiment_names:
-            c = comparisons.get(name)
-            if not c:
-                continue
-            label = METHOD_LABELS.get(name, name)[:28]
-            wc = c["character"]["winrate"]
-            ws = c["semantic"]["winrate"]
-            we = c["embedding"]["winrate"]
-            print(f"  {label:<28} {wc['win']:>5} {wc['tie']:>5} {wc['loss']:>5}"
-                  f"  {wc['win_pct']:>5.1f}%  {ws['win_pct']:>7.1f}%  {we['win_pct']:>7.1f}%")
-        print(f"{'─' * W}")
-
-    # --- Per-character breakdown ---
-    if per_character and report.get("per_character"):
-        per_char_data = report["per_character"]
+    # --- Per-character breakdown (primary judge) ---
+    primary_report = judge_reports[0][1]
+    if per_character and primary_report.get("per_character"):
+        per_char_data = primary_report["per_character"]
         all_roles = sorted(set(
             role for exp_data in per_char_data.values() for role in exp_data
         ))
@@ -896,13 +1051,18 @@ def main():
         "--per_character", action="store_true",
         help="Include per-character breakdown in the report",
     )
+    parser.add_argument(
+        "--judge_models", nargs="*", default=None,
+        help="Judge models to include (default: gpt-4.1 glm-5.2 deepseek-v4-flash)",
+    )
     args = parser.parse_args()
 
     baseline = args.baseline or "m2_raw_profile"
     splits = args.splits if args.splits else None
+    judge_models = args.judge_models if args.judge_models else None
 
     report = compute_report(args.results_dir, args.experiments, baseline,
-                            splits=splits)
+                            splits=splits, judge_models=judge_models)
     if not report:
         return
 

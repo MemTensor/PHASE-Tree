@@ -134,6 +134,36 @@ def get_env(key: str, fallback: str | None = None) -> str | None:
     return val if val else fallback
 
 
+def judge_scores_filename(model: str) -> str:
+    """Return the judge-scores filename for a given model.
+
+    ``gpt-4.1`` keeps the legacy ``judge_scores.jsonl`` name so existing GPT
+    results and downstream report scripts remain unchanged.  Other models are
+    written to model-specific files, e.g. ``judge_scores_glm-5.2.jsonl``.
+    """
+    if model == "gpt-4.1":
+        return "judge_scores.jsonl"
+    safe = re.sub(r"[^\w.-]+", "_", model)
+    return f"judge_scores_{safe}.jsonl"
+
+
+def should_disable_thinking(model: str, explicit: bool | None = None) -> bool:
+    """Return whether to disable chain-of-thought thinking for judge models."""
+    if explicit is not None:
+        return explicit
+    env = get_env("JUDGE_DISABLE_THINKING")
+    if env is not None:
+        return env.lower() in {"1", "true", "yes", "on"}
+    m = model.lower()
+    return m.startswith("glm") or "deepseek" in m
+
+
+def model_supports_thinking_param(model: str) -> bool:
+    """Only GLM / DeepSeek endpoints accept extra_body.thinking."""
+    m = model.lower()
+    return m.startswith("glm") or "deepseek" in m
+
+
 # ---------------------------------------------------------------------------
 # LLM-as-Judge  (parallel via ThreadPoolExecutor)
 # ---------------------------------------------------------------------------
@@ -181,7 +211,11 @@ def judge_one(
     rubric: str,
     max_retries: int = 3,
     rate_limit_sleep: float = 0.1,
+    disable_thinking: bool = False,
+    record_model: str | None = None,
 ) -> dict:
+    api_model = model
+    label_model = record_model or model
     prompt = JUDGE_PROMPT.format(
         character_profile=sample["profile_text"],
         context=sample["input"],
@@ -189,21 +223,31 @@ def judge_one(
         prediction=prediction,
         rubric=rubric,
     )
+    create_kwargs: dict = {
+        "model": api_model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0,
+        "max_tokens": 400,
+        "timeout": 60,
+    }
+    if disable_thinking and model_supports_thinking_param(api_model):
+        create_kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
     last_err = None
     for attempt in range(1, max_retries + 1):
         try:
             if rate_limit_sleep > 0:
                 time.sleep(rate_limit_sleep)
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-                max_tokens=400,
-                timeout=60,
-            )
-            raw = resp.choices[0].message.content.strip()
+            resp = client.chat.completions.create(**create_kwargs)
+            raw = (resp.choices[0].message.content or "").strip()
+            if not raw:
+                raise ValueError("empty judge response content")
             scores = parse_judge_response(raw)
-            return {"question_id": sample["question_id"], "role": sample["role"], **scores}
+            return {
+                "question_id": sample["question_id"],
+                "role": sample["role"],
+                "judge_model": label_model,
+                **scores,
+            }
         except Exception as e:
             last_err = e
             if attempt < max_retries:
@@ -222,7 +266,12 @@ def run_llm_judge(
     num_workers: int = 10,
     max_retries: int = 3,
     rate_limit_sleep: float = 0.1,
+    disable_thinking: bool = False,
+    api_model: str | None = None,
+    record_model: str | None = None,
 ):
+    call_model = api_model or model
+    label_model = record_model or model
     done_keys = load_done_keys(output_path)
     tasks = [
         (qid, pred) for qid, pred in predictions.items()
@@ -230,7 +279,9 @@ def run_llm_judge(
     ]
     print(f"  LLM Judge: total={len(predictions)}, done={len(done_keys)}, "
           f"remaining={len(tasks)}, workers={num_workers}, "
-          f"retries={max_retries}", flush=True)
+          f"retries={max_retries}, thinking={'OFF' if disable_thinking else 'ON'}"
+          + (f", api_model={call_model}" if call_model != label_model else ""),
+          flush=True)
     if not tasks:
         return
 
@@ -241,8 +292,8 @@ def run_llm_judge(
 
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         futures = {
-            pool.submit(judge_one, client, model, samples[qid], pred, rubric,
-                        max_retries, rate_limit_sleep): qid
+            pool.submit(judge_one, client, call_model, samples[qid], pred, rubric,
+                        max_retries, rate_limit_sleep, disable_thinking, label_model): qid
             for qid, pred in tasks
         }
         pbar = tqdm(total=len(tasks), desc="llm-judge", unit="sample",
@@ -409,6 +460,34 @@ def main():
         "--rubric", type=str, default=None,
         help="Path to scoring rubric markdown (default: persona_rubric.md next to this script)",
     )
+    parser.add_argument(
+        "--judge_model", type=str, default=None,
+        help="Judge label + output file (default: JUDGE_MODEL env or gpt-4.1). "
+             "Non-gpt-4.1 models write to judge_scores_<model>.jsonl.",
+    )
+    parser.add_argument(
+        "--api_model", type=str, default=None,
+        help="Model name sent to the judge API (default: same as --judge_model). "
+             "Use when the upstream model differs from the recorded judge_model.",
+    )
+    parser.add_argument(
+        "--judge_scores_file", type=str, default=None,
+        help="Override judge output filename (default: auto from --judge_model)",
+    )
+    parser.add_argument(
+        "--skip_embedding", action="store_true",
+        help="Only run the LLM judge pass; skip embedding similarity",
+    )
+    parser.add_argument(
+        "--disable_thinking", dest="disable_thinking", action="store_true",
+        default=None,
+        help="Disable GLM chain-of-thought thinking (extra_body thinking.type=disabled). "
+             "Defaults to ON for glm-* models / JUDGE_DISABLE_THINKING=1.",
+    )
+    parser.add_argument(
+        "--enable_thinking", dest="disable_thinking", action="store_false",
+        help="Keep GLM thinking enabled even for glm-* models.",
+    )
     parser.add_argument("--num_workers", type=int, default=10,
                         help="Parallel workers for the LLM judge pass (and embedding "
                              "pass when --embed_workers is not set)")
@@ -416,6 +495,10 @@ def main():
                         help="Parallel workers for the embedding pass; defaults to --num_workers")
     parser.add_argument("--num_samples", type=int, default=None,
                         help="Only score first N predictions (for debugging)")
+    parser.add_argument(
+        "--sample_ids_file", type=str, default=None,
+        help="JSON list of question_ids to score (fixed subsample manifest)",
+    )
     parser.add_argument("--max_retries", type=int, default=3,
                         help="Max retries per judge API call on failure")
     parser.add_argument("--rate_limit_sleep", type=float, default=0.1,
@@ -449,8 +532,20 @@ def main():
     predictions = {p["question_id"]: p["prediction"] for p in pred_list}
     print(f"Loaded {len(predictions)} predictions from {pred_path}", flush=True)
 
+    if args.sample_ids_file:
+        with open(args.sample_ids_file, "r", encoding="utf-8") as f:
+            allowed_ids = set(json.load(f))
+        before = len(predictions)
+        predictions = {k: v for k, v in predictions.items() if k in allowed_ids}
+        print(
+            f"  Subsample filter: {len(predictions)}/{before} predictions "
+            f"(manifest={len(allowed_ids)} ids from {args.sample_ids_file})",
+            flush=True,
+        )
+
     # --- API clients ---
-    judge_model = get_env("JUDGE_MODEL") or "gpt-4.1"
+    judge_model = args.judge_model or get_env("JUDGE_MODEL") or "gpt-4.1"
+    api_model = args.api_model or get_env("JUDGE_API_MODEL") or judge_model
     judge_api_key = get_env("JUDGE_API_KEY") or get_env("OPENAI_API_KEY")
     judge_base_url = get_env("JUDGE_BASE_URL") or get_env("OPENAI_BASE_URL")
     judge_client = OpenAI(api_key=judge_api_key, base_url=judge_base_url)
@@ -464,9 +559,14 @@ def main():
     rubric_text = load_rubric(rubric_path)
 
     embed_workers = args.embed_workers if args.embed_workers is not None else args.num_workers
+    disable_thinking = should_disable_thinking(api_model, args.disable_thinking)
 
     print(f"\n{'─' * 50}", flush=True)
     print(f"  Judge model : {judge_model}", flush=True)
+    if api_model != judge_model:
+        print(f"  API model   : {api_model}", flush=True)
+    print(f"  Judge file  : {args.judge_scores_file or judge_scores_filename(judge_model)}", flush=True)
+    print(f"  Thinking    : {'OFF' if disable_thinking else 'ON'}", flush=True)
     print(f"  Embed model : {embed_model}", flush=True)
     print(f"  Rubric      : {rubric_path}", flush=True)
     print(f"  Workers     : judge={args.num_workers}, embed={embed_workers}", flush=True)
@@ -477,16 +577,20 @@ def main():
     print(f"  Persona ref : {len(samples)}", flush=True)
     print(f"{'─' * 50}", flush=True)
 
-    judge_path = os.path.join(args.predictions_dir, "judge_scores.jsonl")
+    judge_fname = args.judge_scores_file or judge_scores_filename(judge_model)
+    judge_path = os.path.join(args.predictions_dir, judge_fname)
     embed_path = os.path.join(args.predictions_dir, "embedding_scores.jsonl")
 
     def _judge_pass():
-        print(f"\n▶ LLM-as-Judge ({judge_model})", flush=True)
+        print(f"\n▶ LLM-as-Judge ({judge_model}) → {judge_fname}", flush=True)
         run_llm_judge(
             judge_client, judge_model, samples, predictions,
             judge_path, rubric_text, args.num_workers,
             max_retries=args.max_retries,
             rate_limit_sleep=args.rate_limit_sleep,
+            disable_thinking=disable_thinking,
+            api_model=api_model,
+            record_model=judge_model,
         )
 
     def _embed_pass():
@@ -496,7 +600,9 @@ def main():
             embed_path, embed_workers,
         )
 
-    if args.concurrent_passes:
+    if args.skip_embedding:
+        _judge_pass()
+    elif args.concurrent_passes:
         # Both passes target independent API endpoints (JUDGE_BASE_URL vs
         # EMBED_BASE_URL), so we can saturate both simultaneously and roughly
         # halve wall-clock time. The two writers append to *separate* JSONL

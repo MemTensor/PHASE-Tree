@@ -10,6 +10,8 @@ build/
 
 # Virtual environments
 .venv/
+.phase_venv/
+.venv-judge/
 venv/
 env/
 
