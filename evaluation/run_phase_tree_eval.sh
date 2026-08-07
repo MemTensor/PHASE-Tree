@@ -146,7 +146,7 @@ declare -a ALL_TASKS_DESC
 declare -a ALL_DATASETS_USED
 
 for DATASET in "${DATASET_LIST[@]}"; do
-    DATA_DIR="phase_tree_data/processed/${DATASET}"
+    DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
     if [ ! -d "$DATA_DIR" ]; then
         echo "  [SKIP] Dataset dir not found: ${DATA_DIR}"
         continue
@@ -249,7 +249,7 @@ for slot in $(seq 0 $((NUM_GPUS - 1))); do
     while IFS= read -r entry; do
         [ -z "$entry" ] && continue
         IFS='|' read -r ds m s save_dir <<< "$entry"
-        df="phase_tree_data/processed/${ds}/${m}/${s}.json"
+        df="LongEvoRoleBench/processed/${ds}/${m}/${s}.json"
         od="results/${ds}/phase_tree/main/${m}/${s}"
         if [ "$FIRST" = true ]; then FIRST=false; else ENTRIES+=","; fi
         if [ -n "$save_dir" ]; then
@@ -319,7 +319,7 @@ else
 fi
 echo "╠══════════════════════════════════════════════════════════════╣"
 for DATASET in "${ALL_DATASETS_USED[@]}"; do
-    DATA_DIR="phase_tree_data/processed/${DATASET}"
+    DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
     DS_MODE="$MODE_ARG"
     if [ -z "$DS_MODE" ]; then
         if [ -d "${DATA_DIR}/m5_dynamic_tree" ]; then DS_MODE="long-term"; else DS_MODE="short-term"; fi
@@ -356,7 +356,7 @@ STEP2_START=$(date +%s)
 
 JUDGE_PIDS=()
 for DATASET in "${ALL_DATASETS_USED[@]}"; do
-    DATA_DIR="phase_tree_data/processed/${DATASET}"
+    DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
     RESULTS_DIR="results/${DATASET}/phase_tree/main"
     LOG_DIR="results/${DATASET}/phase_tree/_logs"
     mkdir -p "$LOG_DIR"
@@ -419,7 +419,7 @@ else
     echo "  STEP 3 ▸ Report Generation"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     for DATASET in "${ALL_DATASETS_USED[@]}"; do
-        DATA_DIR="phase_tree_data/processed/${DATASET}"
+        DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
         RESULTS_DIR="results/${DATASET}/phase_tree/main"
         DS_MODE="$MODE_ARG"
         if [ -z "$DS_MODE" ]; then

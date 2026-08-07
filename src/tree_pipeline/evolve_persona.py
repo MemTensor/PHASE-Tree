@@ -22,13 +22,13 @@ Sessions are also subject to:
     recent 20 medium entries
 
 Input
-    ``phase_tree_data/processed/<dataset>/intermediate/attribute_trees.json``
-    ``phase_tree_data/processed/<dataset>/intermediate/evolution/<Char>_session_archive.json``
-    ``phase_tree_data/processed/<dataset>/intermediate/all_dialogues.json``  (episode order)
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/attribute_trees.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/evolution/<Char>_session_archive.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/all_dialogues.json``  (episode order)
 
 Output
-    ``phase_tree_data/processed/<dataset>/intermediate/evolution/persona_snapshots.json``
-    ``phase_tree_data/processed/<dataset>/intermediate/evolution/evolution_log.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/evolution/persona_snapshots.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/evolution/evolution_log.json``
     Updates session archive files in-place (consumed / expired entries marked)
 
 Usage::
@@ -52,7 +52,7 @@ from openai import AsyncOpenAI
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 MAIN_CHARACTERS: list[str] = []  # populated at runtime from attribute_trees.json
 

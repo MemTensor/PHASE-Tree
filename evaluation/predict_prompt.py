@@ -21,18 +21,18 @@ Usage examples::
 
     # vLLM backend — predict on random_test split
     python evaluation/predict_prompt.py \\
-        --data  phase_tree_data/processed/RAIDEN/m6_phase_tree/random_test.json \\
+        --data  LongEvoRoleBench/processed/RAIDEN/m6_phase_tree/random_test.json \\
         --output_dir results/RAIDEN/prompt/main/m6_phase_tree/random_test
 
     # Explicit HF backend — ood_test split
     python evaluation/predict_prompt.py \\
-        --data  phase_tree_data/processed/RAIDEN/m2_raw_profile/ood_test.json \\
+        --data  LongEvoRoleBench/processed/RAIDEN/m2_raw_profile/ood_test.json \\
         --output_dir results/RAIDEN/prompt/main/m2_raw_profile/ood_test \\
         --backend hf --batch_size 8
 
     # Baseline prompt (no profile)
     python evaluation/predict_prompt.py \\
-        --data  phase_tree_data/processed/RAIDEN/m1_context_only/random_test.json \\
+        --data  LongEvoRoleBench/processed/RAIDEN/m1_context_only/random_test.json \\
         --output_dir results/RAIDEN/prompt/main/m1_context_only/random_test \\
         --prompt_mode baseline
 """
@@ -591,10 +591,10 @@ def multi_main():
     ``tasks.json`` is a JSON list::
 
         [
-          {"data": "phase_tree_data/.../m2_raw_profile/random_test.json",
+          {"data": "LongEvoRoleBench/.../m2_raw_profile/random_test.json",
            "output_dir": "results/.../m2_raw_profile/random_test",
            "prompt_mode": "profile"},
-          {"data": "phase_tree_data/.../m1_context_only/ood_test.json",
+          {"data": "LongEvoRoleBench/.../m1_context_only/ood_test.json",
            "output_dir": "results/.../m1_context_only/ood_test",
            "prompt_mode": "baseline"}
         ]

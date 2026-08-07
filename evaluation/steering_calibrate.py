@@ -33,7 +33,7 @@ Usage
 ::
 
     python evaluation/steering_calibrate.py \\
-        --train_data phase_tree_data/processed/RAIDEN/m2_raw_profile/train.json \\
+        --train_data LongEvoRoleBench/processed/RAIDEN/m2_raw_profile/train.json \\
         --output     results/RAIDEN/comparison/main/steering/persona_vectors.pt \\
         --layer 18 --num_per_role 50
 

@@ -86,7 +86,7 @@ if [ -n "$WAIT_PID" ]; then
     echo "PID ${WAIT_PID} finished."
 fi
 
-DATA_DIR="phase_tree_data/processed/${DATASET}"
+DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
 RESULTS_DIR="results/${DATASET}/${TRACK}/${RESULTS_TAG}"
 LOG_DIR="${RESULTS_DIR}/_logs"
 mkdir -p "$LOG_DIR"

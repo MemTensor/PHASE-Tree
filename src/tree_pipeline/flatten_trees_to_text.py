@@ -47,7 +47,7 @@ import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 
 def _strip_trailing_punct(s: str) -> str:

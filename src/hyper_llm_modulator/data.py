@@ -1,7 +1,7 @@
 """Data loading and processing for PHASE-Tree hypernetwork training.
 
 Each ``tasks/<name>/metadata.yaml`` points to a local JSON file via
-``ds_kwargs.path`` (e.g. ``phase_tree_data/processed/RAIDEN/m6_phase_tree/train.json``).
+``ds_kwargs.path`` (e.g. ``LongEvoRoleBench/processed/RAIDEN/m6_phase_tree/train.json``).
 HuggingFace's ``load_dataset`` is used to load these JSON files; the
 ``load_from_disk`` path supports already-tokenised HF Arrow caches.
 
@@ -45,9 +45,9 @@ from hyper_llm_modulator.utils import (
 
 logger = logging.getLogger()
 
-DATA_DIR = "phase_tree_data"
-TRANSFORMED_DS_DIR = "phase_tree_data/transformed_datasets"
-EMBS_DIR = "phase_tree_data/embs"
+DATA_DIR = "LongEvoRoleBench"
+TRANSFORMED_DS_DIR = "LongEvoRoleBench/transformed_datasets"
+EMBS_DIR = "LongEvoRoleBench/embs"
 
 
 from typing import Optional

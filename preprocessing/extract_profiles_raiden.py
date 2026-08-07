@@ -5,10 +5,10 @@ blob into a key-value dict, and save as ``raw_profiles.json`` for
 downstream consumption by ``src/tree_pipeline/profiles_to_trees.py``.
 
 Input
-    ``phase_tree_data/raw_data/RAIDEN/release_data/npc.json``
+    ``LongEvoRoleBench/raw_data/RAIDEN/release_data/npc.json``
 
 Output
-    ``phase_tree_data/processed/RAIDEN/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/RAIDEN/intermediate/raw_profiles.json``
 
 Usage::
 
@@ -19,8 +19,8 @@ import json
 import re
 from pathlib import Path
 
-RAW_DATA_DIR = Path(__file__).resolve().parent.parent / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = Path(__file__).resolve().parent.parent / "phase_tree_data" / "processed"
+RAW_DATA_DIR = Path(__file__).resolve().parent.parent / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = Path(__file__).resolve().parent.parent / "LongEvoRoleBench" / "processed"
 
 _KEY_RE = re.compile(
     r"^([\u4e00-\u9fffa-zA-Z][^:：\n]{0,35})\s*[:：]\s*(.*)"

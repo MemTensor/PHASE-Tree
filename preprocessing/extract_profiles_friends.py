@@ -13,10 +13,10 @@ This script:
 4. Saves profiles using the same unified field schema as ChatHaruhi.
 
 Input
-    ``phase_tree_data/raw_data/Friends/json/friends_season_01.json``
+    ``LongEvoRoleBench/raw_data/Friends/json/friends_season_01.json``
 
 Output
-    ``phase_tree_data/processed/Friends/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/Friends/intermediate/raw_profiles.json``
 
 Dependencies
     * ``openai``, ``python-dotenv`` — LLM API access.
@@ -40,8 +40,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 load_dotenv(PROJECT_ROOT / ".env")
 
 RANDOM_SEED = 42

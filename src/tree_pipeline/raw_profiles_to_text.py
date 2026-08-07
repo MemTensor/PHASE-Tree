@@ -10,10 +10,10 @@ The output file is named ``raw_profile_texts.json`` to distinguish it
 from attribute-tree-based profile flattening used at a later stage.
 
 Input
-    ``phase_tree_data/processed/<dataset>/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/raw_profiles.json``
 
 Output
-    ``phase_tree_data/processed/<dataset>/intermediate/raw_profile_texts.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/raw_profile_texts.json``
 
 Usage::
 
@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 NAME_KEYS = {"姓名", "name", "character_name", "角色名", "npc_name"}
 

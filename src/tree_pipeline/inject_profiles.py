@@ -25,7 +25,7 @@ Six experimental methods are supported:
   Source: ``intermediate/{split}_phase_profile_texts.json``
   Output dir: ``m6_phase_tree/``
 
-Output naming: ``phase_tree_data/processed/<dataset>/<method_dir>/<split>.json``
+Output naming: ``LongEvoRoleBench/processed/<dataset>/<method_dir>/<split>.json``
 
 Usage::
 
@@ -42,7 +42,7 @@ import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 METHODS = (
     "context_only", "raw_profile", "naive_rewrite",

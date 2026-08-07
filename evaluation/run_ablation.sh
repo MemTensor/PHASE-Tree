@@ -103,7 +103,7 @@ NUM_WORKERS="${NUM_WORKERS:-$DEFAULT_NUM_WORKERS}"
 RATE_LIMIT_SLEEP="${RATE_LIMIT_SLEEP:-$DEFAULT_RATE_LIMIT}"
 SEQUENTIAL="${SEQUENTIAL:-0}"
 
-DATA_DIR="phase_tree_data/processed/${DATASET}"
+DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
 ABLATION_DIR="results/${DATASET}/prompt/ablation"
 LOG_DIR="${ABLATION_DIR}/_logs"
 mkdir -p "$LOG_DIR"

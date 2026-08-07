@@ -26,9 +26,9 @@ This script attacks the problem from a different angle:
    must be compact phrases, and we never wholesale-replace a field.
 
 Inputs:
-    ``phase_tree_data/processed/<dataset>/intermediate/evolution/persona_snapshots.json``
-    ``phase_tree_data/processed/<dataset>/intermediate/evolution/<Char>_session_archive.json``
-    ``phase_tree_data/processed/<dataset>/intermediate/all_dialogues.json``  (episode order)
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/evolution/persona_snapshots.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/evolution/<Char>_session_archive.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/all_dialogues.json``  (episode order)
 
 Outputs (in-place):
     ``persona_snapshots.json``  -> updated personality/speaking_style values
@@ -60,7 +60,7 @@ from openai import AsyncOpenAI
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 MAIN_CHARACTERS = [
     "Monica Geller", "Ross Geller", "Rachel Green",

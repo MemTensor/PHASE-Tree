@@ -58,7 +58,7 @@ MODE_ARG="${2:-${MODE:-}}"
 shift $(( $# < 2 ? $# : 2 ))
 
 # Auto-detect MODE from dataset directory layout if not specified.
-DATA_DIR="phase_tree_data/processed/${DATASET}"
+DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
 if [ -z "$MODE_ARG" ]; then
     if [ -d "${DATA_DIR}/m5_dynamic_tree" ]; then
         MODE_ARG="long-term"

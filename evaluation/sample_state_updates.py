@@ -53,7 +53,7 @@ PERSONA_FIELDS = {
 }
 
 # Resolved at import; ``main()`` may override via --data-dir.
-DATA = ROOT / "phase_tree_data" / "processed"
+DATA = ROOT / "LongEvoRoleBench" / "processed"
 
 
 def _uid(*parts: str) -> str:
@@ -318,7 +318,7 @@ def main() -> None:
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=ROOT / "phase_tree_data" / "processed",
+        default=ROOT / "LongEvoRoleBench" / "processed",
         help="Processed PHASE-Tree data root",
     )
     parser.add_argument(

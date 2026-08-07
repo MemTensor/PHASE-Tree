@@ -47,7 +47,7 @@ from tree_pipeline.evolve_persona import (  # type: ignore
     _role_tier,
 )
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 
 def _current_couple_role_at(rel: str, target_first: str) -> str | None:

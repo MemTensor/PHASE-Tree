@@ -11,14 +11,14 @@ Two modes are supported via ``--mode``:
 
 Pool construction
 -----------------
-The retrieval pool is built from ``phase_tree_data/processed/<DATASET>/m1_context_only/
+The retrieval pool is built from ``LongEvoRoleBench/processed/<DATASET>/m1_context_only/
 train.json`` (all training-split dialogues, all characters).  Using the
 train split exclusively guarantees no test-time leakage.  Embeddings are
 produced via an OpenAI-compatible endpoint configured by
 ``RETRIEVAL_EMBED_*`` env vars (falling back to ``EMBED_*`` / ``JUDGE_*``).
 By default this points to a local Qwen3-Embedding-4B for best Chinese
 retrieval quality.  Cached on disk under
-``phase_tree_data/processed/<DATASET>/_retrieval_cache/``.
+``LongEvoRoleBench/processed/<DATASET>/_retrieval_cache/``.
 
 Inference
 ---------
@@ -29,16 +29,16 @@ Usage::
 
     # RAG on RAIDEN random_test
     python evaluation/predict_rag.py \\
-        --data        phase_tree_data/processed/RAIDEN/m1_context_only/random_test.json \\
-        --pool        phase_tree_data/processed/RAIDEN/m1_context_only/train.json \\
+        --data        LongEvoRoleBench/processed/RAIDEN/m1_context_only/random_test.json \\
+        --pool        LongEvoRoleBench/processed/RAIDEN/m1_context_only/train.json \\
         --output_dir  results/RAIDEN/comparison/main/rag/random_test \\
         --mode rag --top_k 5
 
     # PAG on Friends ood_test
     python evaluation/predict_rag.py \\
-        --data        phase_tree_data/processed/Friends/m1_context_only/ood_test.json \\
-        --profile_data phase_tree_data/processed/Friends/m2_raw_profile/all_dialogues.json \\
-        --pool        phase_tree_data/processed/Friends/m1_context_only/train.json \\
+        --data        LongEvoRoleBench/processed/Friends/m1_context_only/ood_test.json \\
+        --profile_data LongEvoRoleBench/processed/Friends/m2_raw_profile/all_dialogues.json \\
+        --pool        LongEvoRoleBench/processed/Friends/m1_context_only/train.json \\
         --output_dir  results/Friends/comparison/main/pag/ood_test \\
         --mode pag --top_k 5
 """

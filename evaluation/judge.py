@@ -23,7 +23,7 @@ Usage example::
 
     python evaluation/judge.py \\
         --predictions_dir results/RAIDEN/prompt/main/m6_phase_tree/random_test \\
-        --persona_data   phase_tree_data/processed/RAIDEN/m6_phase_tree/all_dialogues.json \\
+        --persona_data   LongEvoRoleBench/processed/RAIDEN/m6_phase_tree/all_dialogues.json \\
         --num_workers 10
 """
 

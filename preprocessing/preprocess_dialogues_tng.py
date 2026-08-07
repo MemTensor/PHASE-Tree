@@ -13,11 +13,11 @@ scene with all speakers' real names preserved.
                      dynamic attribute tree evolution)
 
 Input
-    ``phase_tree_data/raw_data/StarTrek/star_trek_tng_season_*.json``
+    ``LongEvoRoleBench/raw_data/StarTrek/star_trek_tng_season_*.json``
 
 Output
-    ``phase_tree_data/processed/StarTrek_TNG/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/StarTrek_TNG/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/StarTrek_TNG/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/StarTrek_TNG/intermediate/{train,random_test,ood_test}.json``
 
 Usage::
 
@@ -34,8 +34,8 @@ from collections import Counter
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 RANDOM_SEED = 42
 

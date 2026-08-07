@@ -10,21 +10,24 @@ For each dialogue sample (``role`` + ``input`` + ``output``) the script:
    persona used to interpret a dialogue at S05E08 is the snapshot saved at
    the end of S05E07 — preventing temporal leakage of updates that were
    themselves derived from S05E08's sessions).
-3. Prompts the LLM with that prev-episode persona + the full dialogue to
-   produce a per-dialogue ``session`` and ``moment`` (same schema as the
-   short-term flow).
+3. Prompts the LLM with that prev-episode persona + the dialogue **context**
+   (``input`` only, by default) to produce a per-dialogue ``session`` and
+   ``moment`` (same schema as the short-term flow).  This keeps the extracted
+   state at T-1 and avoids leaking the target reply.  Pass ``--include_output``
+   to also append the character's target reply to the dialogue (legacy
+   behaviour; leaks the ground-truth line into the profile).
 4. Stores the LLM output keyed by ``question_id``, along with metadata
    pointing to which snapshot was used.
 
 Inputs
 ------
-``phase_tree_data/processed/<dataset>/intermediate/<split>.json``
-``phase_tree_data/processed/<dataset>/intermediate/attribute_trees.json``
-``phase_tree_data/processed/<dataset>/intermediate/evolution/persona_snapshots.json``
+``LongEvoRoleBench/processed/<dataset>/intermediate/<split>.json``
+``LongEvoRoleBench/processed/<dataset>/intermediate/attribute_trees.json``
+``LongEvoRoleBench/processed/<dataset>/intermediate/evolution/persona_snapshots.json``
 
 Outputs
 -------
-``phase_tree_data/processed/<dataset>/intermediate/<split>_long_term_moments.json``
+``LongEvoRoleBench/processed/<dataset>/intermediate/<split>_long_term_moments.json``
 
 Schema (per ``question_id``)::
 
@@ -74,7 +77,7 @@ from tree_pipeline.update_session_moment import (  # type: ignore
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 CHECKPOINT_EVERY = 100
 
@@ -147,19 +150,23 @@ async def process_one(
     persona_tree: dict,
     dialogue_input: str,
     dialogue_output: str,
+    include_output: bool = False,
     max_retries: int = 3,
 ) -> dict | None:
     """Call the LLM once for a single sample's session/moment extraction."""
     persona_summary = persona_to_summary(persona_tree)
     en = _is_english_tree(persona_tree)
 
-    # Build the dialogue payload by appending the speaker's reply so the LLM
-    # sees the FULL exchange (mirrors short-term semantics).
-    full_dialogue = (
-        f"{dialogue_input}\n{role}: {dialogue_output}".strip()
-        if dialogue_output
-        else dialogue_input
-    )
+    # Build the dialogue payload.  By default we use ONLY the dialogue context
+    # (``input``) — matching the short-term ``update_session_moment`` semantics
+    # — so the session/moment reflect the character's state at T-1, BEFORE the
+    # target reply.  Appending the target ``output`` would leak the
+    # ground-truth line (the very thing predicted at inference) into the
+    # profile, so it is opt-in via ``include_output``.
+    if include_output and dialogue_output:
+        full_dialogue = f"{dialogue_input}\n{role}: {dialogue_output}".strip()
+    else:
+        full_dialogue = dialogue_input
 
     user_prompt = build_user_prompt(
         role, persona_summary, full_dialogue, use_english=en,
@@ -201,6 +208,7 @@ async def process_sample(
     sample: dict,
     snapshots: dict,
     base_trees: dict,
+    include_output: bool = False,
 ) -> tuple[str, dict | None]:
     role = sample["role"]
     qid = sample["question_id"]
@@ -224,6 +232,7 @@ async def process_sample(
     update = await process_one(
         client, semaphore, model, role, persona_tree,
         sample.get("input", ""), sample.get("output", ""),
+        include_output=include_output,
     )
     if not update:
         return qid, None
@@ -245,6 +254,7 @@ async def run_split(
     out_path: Path,
     workers: int,
     resume: bool,
+    include_output: bool = False,
 ) -> dict:
     existing: dict = {}
     if resume and out_path.exists():
@@ -271,7 +281,10 @@ async def run_split(
 
     tasks = [
         asyncio.create_task(
-            process_sample(client, semaphore, model, s, snapshots, base_trees)
+            process_sample(
+                client, semaphore, model, s, snapshots, base_trees,
+                include_output=include_output,
+            )
         )
         for s in todo
     ]
@@ -416,6 +429,7 @@ async def async_main(args):
         await run_split(
             client, model, valid, snapshots, base_trees, out_path,
             workers=args.workers, resume=args.resume,
+            include_output=args.include_output,
         )
 
     if args.split == "all":
@@ -454,6 +468,12 @@ def main():
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--use_full", action="store_true",
                     help="Read from <split>_full.json instead of <split>.json")
+    ap.add_argument("--include_output", action="store_true",
+                    help="Append the target reply (``output``) to the dialogue "
+                         "before extracting session/moment. Default OFF: only "
+                         "the dialogue context (``input``, state at T-1) is "
+                         "used, matching short-term semantics and avoiding "
+                         "leaking the ground-truth reply into the profile.")
     args = ap.parse_args()
     asyncio.run(async_main(args))
 

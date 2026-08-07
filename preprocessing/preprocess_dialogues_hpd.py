@@ -19,11 +19,11 @@ as-is in context but never selected as output targets.
                      and full war in Book 7 represent massive character shifts)
 
 Input
-    ``phase_tree_data/raw_data/HPD/EN_all.json``
+    ``LongEvoRoleBench/raw_data/HPD/EN_all.json``
 
 Output
-    ``phase_tree_data/processed/HPD/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/HPD/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/HPD/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/HPD/intermediate/{train,random_test,ood_test}.json``
 
 Usage::
 
@@ -41,8 +41,8 @@ from collections import Counter
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 RANDOM_SEED = 42
 

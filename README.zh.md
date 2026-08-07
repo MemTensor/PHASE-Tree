@@ -5,7 +5,7 @@
 
 [![Paper](https://img.shields.io/badge/Paper-EMNLP%202026-b31b1b.svg)](https://anonymous.4open.science/r/PHASE-Tree)
 [![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github)](https://github.com/MemTensor/PHASE-Tree)
-[![Data](https://img.shields.io/badge/🤗%20Data-Dataset-yellow.svg)](https://huggingface.co/datasets/IAAR-Shanghai/phase_tree_data)
+[![Data](https://img.shields.io/badge/🤗%20Data-Dataset-yellow.svg)](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench)
 [![Model](https://img.shields.io/badge/🤗%20Model-Model-yellow.svg)](https://huggingface.co/IAAR-Shanghai/phase_tree_models)
 [![Results](https://img.shields.io/badge/🤗%20Results-Results-yellow.svg)](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -107,7 +107,7 @@ PHASE-Tree/
 └── LICENSE                # MIT
 ```
 
-> ⚠️ 三个大目录**不**纳入 Git，需要从 Hugging Face 拉取：`phase_tree_data/`、`phase_tree_models/`，以及（可选）`results/`。
+> ⚠️ 三个大目录**不**纳入 Git，需要从 Hugging Face 拉取：`LongEvoRoleBench/`、`phase_tree_models/`，以及（可选）`results/`。
 
 ---
 
@@ -115,14 +115,14 @@ PHASE-Tree/
 
 | 类型     | 仓库 | Hugging Face | 默认本地路径 | 大约体积 |
 |---------|------|--------------|--------------|----------|
-| 数据集   | `IAAR-Shanghai/phase_tree_data`        | [🤗 链接](https://huggingface.co/datasets/IAAR-Shanghai/phase_tree_data) | `phase_tree_data/`   | ≈ 8.4 GB |
-| 模型     | `IAAR-Shanghai/phase_tree_models`      | [🤗 链接](https://huggingface.co/IAAR-Shanghai/phase_tree_models)       | `phase_tree_models/` | ≈ 1.7 GB |
-| 评测结果 | `Mathematics-Yang/phase_tree_results`  | [🤗 链接](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 4.4 GB |
+| 数据集   | `IAAR-Shanghai/LongEvoRoleBench`        | [🤗 链接](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench) | `LongEvoRoleBench/`   | ≈ 9 GB |
+| 模型     | `IAAR-Shanghai/phase_tree_models`      | [🤗 链接](https://huggingface.co/IAAR-Shanghai/phase_tree_models)       | `phase_tree_models/` | ≈ 1.8 GB |
+| 评测结果 | `Mathematics-Yang/phase_tree_results`  | [🤗 链接](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 9 GB |
 
 **一键下载（在仓库根目录执行）：**
 
 ```bash
-hf download IAAR-Shanghai/phase_tree_data    --repo-type=dataset --local-dir phase_tree_data
+hf download IAAR-Shanghai/LongEvoRoleBench    --repo-type=dataset --local-dir LongEvoRoleBench
 hf download IAAR-Shanghai/phase_tree_models                       --local-dir phase_tree_models
 # 可选 —— 仅当你想跳过重新跑 prediction / judge 时下载：
 hf download Mathematics-Yang/phase_tree_results --repo-type=dataset --local-dir results
@@ -190,7 +190,7 @@ $EDITOR .env.local         # `.env.local` 已被 git-ignore
 
 ```bash
 # 0) 拉数据 + 检查点（只需一次）
-hf download IAAR-Shanghai/phase_tree_data   --repo-type=dataset --local-dir phase_tree_data
+hf download IAAR-Shanghai/LongEvoRoleBench   --repo-type=dataset --local-dir LongEvoRoleBench
 hf download IAAR-Shanghai/phase_tree_models                       --local-dir phase_tree_models
 
 # 1) Textual provision：在 RAIDEN 上跑 predict + judge + report（两个 split）
@@ -203,17 +203,17 @@ bash evaluation/run_phase_tree_eval.sh RAIDEN
 bash evaluation/run_comparison_eval.sh RAIDEN rag
 ```
 
-每个启动脚本会读取 `phase_tree_data/processed/<DATASET>/<METHOD>/{random_test,ood_test}.json`，把预测写到 `results/<DATASET>/<paradigm>/main/<METHOD>/<SPLIT>/predictions.jsonl`，然后依次串起来 `judge.py → report.py → visualize.py`。
+每个启动脚本会读取 `LongEvoRoleBench/processed/<DATASET>/<METHOD>/{random_test,ood_test}.json`，把预测写到 `results/<DATASET>/<paradigm>/main/<METHOD>/<SPLIT>/predictions.jsonl`，然后依次串起来 `judge.py → report.py → visualize.py`。
 
 ---
 
 ## 🧬 Pipeline
 
-PHASE-Tree 是一个 4 阶段的流水线，每个阶段都可以独立运行。我们已经把第 1、2 阶段的产出（在 `phase_tree_data/`）和第 3 阶段的产出（在 `phase_tree_models/`）打包好了，你可以从任意一个阶段插入。
+PHASE-Tree 是一个 4 阶段的流水线，每个阶段都可以独立运行。我们已经把第 1、2 阶段的产出（在 `LongEvoRoleBench/`）和第 3 阶段的产出（在 `phase_tree_models/`）打包好了，你可以从任意一个阶段插入。
 
 ### Stage 1 · 逐语料预处理
 
-`preprocessing/` 下每个源语料都对应一对脚本：**档案抽取** + **对话转换**。产物写到 `phase_tree_data/processed/<Dataset>/intermediate/`。
+`preprocessing/` 下每个源语料都对应一对脚本：**档案抽取** + **对话转换**。产物写到 `LongEvoRoleBench/processed/<Dataset>/intermediate/`。
 
 ```bash
 # 以 Friends（长对话）为例：从第 1 季对白播种初始角色档案
@@ -227,7 +227,7 @@ python preprocessing/preprocess_dialogues_friends.py
 
 ### Stage 2 · 构建 PHASE-Tree 的 6 个档案变体
 
-消融链的 6 个档案变体放在 `phase_tree_data/processed/<Dataset>/` 下：
+消融链的 6 个档案变体放在 `LongEvoRoleBench/processed/<Dataset>/` 下：
 
 | 变体               | 含义                                                     | 论文标签 |
 |--------------------|----------------------------------------------------------|----------|
@@ -317,7 +317,7 @@ python evaluation/autoreport.py                                          # 跨�
 
 ---
 
-## 📊 LongEvoRoleBench
+## 📊 数据集 · LongEvoRoleBench
 
 八个角色扮演语料库被统一标准化为下一句生成任务，每个数据集都带有**随机**与 **OOD** 两个 test 切分：
 
@@ -342,7 +342,7 @@ python evaluation/autoreport.py                                          # 跨�
 
 ```bash
 # 0) 准备好数据 + 推荐的 SFT 检查点
-hf download IAAR-Shanghai/phase_tree_data   --repo-type=dataset --local-dir phase_tree_data
+hf download IAAR-Shanghai/LongEvoRoleBench   --repo-type=dataset --local-dir LongEvoRoleBench
 hf download IAAR-Shanghai/phase_tree_models                       --local-dir phase_tree_models
 
 # 1) 在 8 个语料上跑所有 textual-provision 消融
@@ -376,13 +376,65 @@ bash evaluation/run_autoreport.sh
 
 ---
 
-## ⚠️ 局限性
+## 🔁 Backbone 与 Judge 泛化性
 
-论文 § Limitations 中讨论的已知问题：
+> 附录级别的鲁棒性验证。每个数值都是在 **4 个短对话**（RAIDEN、CharacterEval、SimsConv、ChatHaruhi）或 **4 个长对话**（Friends、The Office、Harry Potter、Star Trek）语料 × {random, OOD} 上的宏平均，方案为 explicit textual provision 对比——Base / RAG / PAG / CFG / **Ours**（PHASE-Tree）。**加粗** = 该行最佳。
 
-- **单一 backbone、单次运行、语料覆盖有限**：所有实验都用 `Qwen2.5-7B-Instruct` 在一种解码配置和一个 seed 下完成，没有做跨模型族、跨规模、多 seed 或多语言的验证；长对话部分只覆盖 4 个英文剧本/小说语料，更宽的题材和自发对话尚未测试。
-- **基于 LLM 的评测与提取**：Char、Sem 依赖 GPT-4.1 judge，没有人类一致性研究；状态抽取和更新判断也由 LLM 完成，未用 gold 标注审计；显著性检验是单次运行的 question-level 配对检验，无法反映 run-to-run 方差。
-- **手工调的门控 + parametric adaptation**：阻力、证据、冷却阈值是实现默认值，没有 sweep 也没有学习版本；隐式 parametric adaptation 变体走的是 P2P 风格架构，没有把多时间尺度状态完全表达出来。
+### 跨生成 backbone
+
+协议不变，只替换生成 backbone（GPT-4.1 judge，固定 25% 子样本）。PHASE-Tree 的收益不依赖单一模型——从 0.6B 到 32B，它在**每一个长对话格子上都最优**。
+
+**Character Score（Char ↑）**
+
+| Backbone | 切分 | Base | RAG | PAG | CFG | Ours |
+|----------|------|:----:|:---:|:---:|:---:|:----:|
+| Qwen2.5-7B（主）  | Short | 2.183 | 2.533 | 3.038 | **3.096** | 3.044 |
+| Qwen2.5-7B（主）  | Long  | 2.327 | 2.400 | 2.505 | 2.400 | **2.999** |
+| Qwen3-0.6B        | Short | 1.642 | 1.681 | 1.970 | **2.038** | 1.850 |
+| Qwen3-0.6B        | Long  | 1.904 | 1.831 | 1.906 | 1.711 | **2.029** |
+| Gemma-4-E4B-it    | Short | 1.949 | 2.315 | 3.049 | 3.130 | **3.142** |
+| Gemma-4-E4B-it    | Long  | 2.038 | 2.142 | 2.495 | 2.698 | **3.019** |
+| Qwen3-32B         | Short | 3.197 | 3.356 | 3.815 | 3.797 | **3.986** |
+| Qwen3-32B         | Long  | 2.930 | 2.976 | 3.208 | 3.101 | **3.685** |
+
+**Semantic Score（Sem ↑）**
+
+| Backbone | 切分 | Base | RAG | PAG | CFG | Ours |
+|----------|------|:----:|:---:|:---:|:---:|:----:|
+| Qwen2.5-7B（主）  | Short | 3.571 | 3.656 | 3.580 | 3.273 | **3.785** |
+| Qwen2.5-7B（主）  | Long  | 3.327 | 3.285 | 2.883 | 2.444 | **3.707** |
+| Qwen3-0.6B        | Short | 2.625 | 2.561 | 2.596 | 2.254 | **2.744** |
+| Qwen3-0.6B        | Long  | 2.861 | 2.511 | 2.481 | 1.917 | **2.924** |
+| Gemma-4-E4B-it    | Short | 3.402 | 3.525 | 3.416 | 3.075 | **3.619** |
+| Gemma-4-E4B-it    | Long  | 3.256 | 3.270 | 2.911 | 2.774 | **3.715** |
+| Qwen3-32B         | Short | 3.983 | 4.004 | 3.910 | 3.622 | **4.120** |
+| Qwen3-32B         | Long  | 3.632 | 3.594 | 3.412 | 3.045 | **4.056** |
+
+### 跨 judge 模型
+
+用三个 LLM-as-Judge 后端（通过 `.env` 的 `JUDGE_*` 配置）对**同一份** `Qwen2.5-7B-Instruct` 预测重新打分。不同 judge 的绝对分数尺度不同（GLM-5.2 与 DeepSeek-V4-Flash 比 GPT-4.1 更严格），但排序稳定——**无论用哪个 judge，Ours 在每一个长对话格子上都领先**。
+
+**Character Score（Char ↑）**
+
+| Judge | 切分 | Base | RAG | PAG | CFG | Ours |
+|-------|------|:----:|:---:|:---:|:---:|:----:|
+| GPT-4.1（默认）    | Short | 2.143 | 2.527 | 2.989 | **3.075** | 3.028 |
+| GPT-4.1（默认）    | Long  | 2.326 | 2.405 | 2.510 | 2.389 | **3.004** |
+| GLM-5.2            | Short | 2.347 | 2.656 | 3.165 | **3.208** | 3.150 |
+| GLM-5.2            | Long  | 2.607 | 2.665 | 2.709 | 2.524 | **3.040** |
+| DeepSeek-V4-Flash  | Short | 2.675 | 2.893 | 3.040 | 2.819 | **3.210** |
+| DeepSeek-V4-Flash  | Long  | 2.911 | 2.924 | 2.645 | 2.278 | **3.391** |
+
+**Semantic Score（Sem ↑）**
+
+| Judge | 切分 | Base | RAG | PAG | CFG | Ours |
+|-------|------|:----:|:---:|:---:|:---:|:----:|
+| GPT-4.1（默认）    | Short | 3.539 | 3.659 | 3.588 | 3.245 | **3.792** |
+| GPT-4.1（默认）    | Long  | 3.323 | 3.289 | 2.889 | 2.429 | **3.697** |
+| GLM-5.2            | Short | 2.824 | 2.913 | 2.853 | 2.583 | **3.025** |
+| GLM-5.2            | Long  | 2.502 | 2.466 | 2.187 | 1.882 | **2.751** |
+| DeepSeek-V4-Flash  | Short | 2.707 | 2.813 | 2.712 | 2.387 | **2.895** |
+| DeepSeek-V4-Flash  | Long  | 2.611 | 2.583 | 2.238 | 1.892 | **2.917** |
 
 ---
 

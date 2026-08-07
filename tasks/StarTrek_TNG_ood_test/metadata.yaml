@@ -1,7 +1,7 @@
 assistant_prefill: ''
 ds_kwargs:
   name: StarTrek_TNG_ood_test
-  path: ./phase_tree_data/processed/StarTrek_TNG/m6_phase_tree/ood_test.json
+  path: ./LongEvoRoleBench/processed/StarTrek_TNG/m6_phase_tree/ood_test.json
 train_first_n: null
 response_field: output
 system_message: ''

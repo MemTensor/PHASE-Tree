@@ -284,7 +284,7 @@ def sample(results_dir: Path, data_dir: Path, out_dir: Path, target_total: int, 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results-dir", type=Path, default=ROOT / "results")
-    parser.add_argument("--data-dir", type=Path, default=ROOT / "phase_tree_data" / "processed")
+    parser.add_argument("--data-dir", type=Path, default=ROOT / "LongEvoRoleBench" / "processed")
     parser.add_argument("--out", type=Path, default=ROOT / "results" / "human_eval")
     parser.add_argument("--target", type=int, default=200)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)

@@ -24,7 +24,7 @@ Usage
 ::
 
     python evaluation/predict_steering.py \\
-        --data        phase_tree_data/processed/RAIDEN/m1_context_only/random_test.json \\
+        --data        LongEvoRoleBench/processed/RAIDEN/m1_context_only/random_test.json \\
         --vectors     results/RAIDEN/comparison/main/steering/persona_vectors.pt \\
         --output_dir  results/RAIDEN/comparison/main/steering/random_test \\
         --alpha 4.0

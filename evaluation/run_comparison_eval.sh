@@ -95,7 +95,7 @@ else
     METHOD_LIST=("$METHOD_ARG")
 fi
 
-DATA_DIR="phase_tree_data/processed/${DATASET}"
+DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
 
 if [ -z "$MODE_ARG" ]; then
     if [ -d "${DATA_DIR}/m5_dynamic_tree" ]; then

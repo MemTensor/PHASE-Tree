@@ -14,11 +14,11 @@ clustering, Friends uses a *temporal* split to support long-term evolution:
                      dynamic attribute tree evolution)
 
 Input
-    ``phase_tree_data/raw_data/Friends/json/friends_season_*.json``
+    ``LongEvoRoleBench/raw_data/Friends/json/friends_season_*.json``
 
 Output
-    ``phase_tree_data/processed/Friends/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/Friends/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/Friends/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/Friends/intermediate/{train,random_test,ood_test}.json``
 
 Usage::
 
@@ -35,8 +35,8 @@ from collections import defaultdict, Counter
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 RANDOM_SEED = 42
 

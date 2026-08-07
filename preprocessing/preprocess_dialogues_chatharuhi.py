@@ -17,14 +17,14 @@ training / evaluation sample:
 K-Means clustering (identical approach to the RAIDEN pipeline).
 
 Input
-    ``phase_tree_data/raw_data/ChatHaruhi/Haruhi_54K_v1.jsonl``
-    ``phase_tree_data/processed/ChatHaruhi/intermediate/raw_profiles.json``
-    ``phase_tree_data/processed/ChatHaruhi/intermediate/raw_profile_texts.json``
+    ``LongEvoRoleBench/raw_data/ChatHaruhi/Haruhi_54K_v1.jsonl``
+    ``LongEvoRoleBench/processed/ChatHaruhi/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/ChatHaruhi/intermediate/raw_profile_texts.json``
 
 Output
-    ``phase_tree_data/processed/ChatHaruhi/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/ChatHaruhi/intermediate/character_embeddings.npz``
-    ``phase_tree_data/processed/ChatHaruhi/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/ChatHaruhi/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/ChatHaruhi/intermediate/character_embeddings.npz``
+    ``LongEvoRoleBench/processed/ChatHaruhi/intermediate/{train,random_test,ood_test}.json``
 
 Dependencies
     * ``split_utils`` — shared embedding + 3-way split logic
@@ -45,8 +45,8 @@ import numpy as np
 from split_utils import compute_character_embeddings, three_way_split
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 # ---------------------------------------------------------------------------
 # Name normalisation  (mirrors extract_profiles_chatharuhi.py)

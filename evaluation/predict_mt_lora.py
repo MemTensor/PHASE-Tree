@@ -17,7 +17,7 @@ Usage
 ::
 
     python evaluation/predict_mt_lora.py \\
-        --data         phase_tree_data/processed/RAIDEN/m1_context_only/random_test.json \\
+        --data         LongEvoRoleBench/processed/RAIDEN/m1_context_only/random_test.json \\
         --lora_path    phase_tree_models/mt_lora/RAIDEN \\
         --output_dir   results/RAIDEN/comparison/main/mt_lora/random_test
 """

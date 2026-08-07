@@ -113,7 +113,7 @@ echo ""
 # Build flat task list: dataset:method:split
 ALL_TASKS=()
 for DATASET in "${DATASET_LIST[@]}"; do
-    DATA_DIR="phase_tree_data/processed/${DATASET}"
+    DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
     if [ ! -d "$DATA_DIR" ]; then
         echo "  [SKIP] missing data dir: ${DATA_DIR}"
         continue
@@ -159,7 +159,7 @@ if [ "${RESUME:-0}" = "1" ]; then
     FILTERED_TASKS=()
     for item in "${ALL_TASKS[@]}"; do
         IFS=':' read -r dataset method split <<< "$item"
-        DATA_DIR="phase_tree_data/processed/${dataset}"
+        DATA_DIR="LongEvoRoleBench/processed/${dataset}"
         case "$method" in
             rag|pag) DATA_FILE="${DATA_DIR}/m1_context_only/${split}.json" ;;
             cfg)     DATA_FILE="${DATA_DIR}/m2_raw_profile/${split}.json" ;;
@@ -234,7 +234,7 @@ run_gpu_worker() {
             gpu_cleanup
             IFS=':' read -r dataset method split <<< "$item"
 
-            DATA_DIR="phase_tree_data/processed/${dataset}"
+            DATA_DIR="LongEvoRoleBench/processed/${dataset}"
             POOL_PATH="${DATA_DIR}/m1_context_only/train.json"
             PROFILE_DATA="${DATA_DIR}/m2_raw_profile/all_dialogues.json"
             OUT_DIR="results/${dataset}/comparison/${RESULTS_TAG}/${method}/${split}"

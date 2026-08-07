@@ -47,12 +47,12 @@ wandb/
 runs/
 
 # Large external artefacts — shipped separately via Hugging Face, not Git.
-# `phase_tree_data/`         → IAAR-Shanghai/phase_tree_data            (dataset)
+# `LongEvoRoleBench/`         → IAAR-Shanghai/LongEvoRoleBench            (dataset)
 # `phase_tree_models/`       → IAAR-Shanghai/phase_tree_models          (model)
 # `phase_tree_models_full/`  → local-only ablation grid (not released)
 # `models/`                  → vendor base models (Qwen2.5-7B-Instruct, Qwen3-Embedding-4B, ...)
 # `results/`                 → IAAR-Shanghai/phase_tree_results         (dataset)
-phase_tree_data/
+LongEvoRoleBench/
 phase_tree_models/
 phase_tree_models_full/
 models/

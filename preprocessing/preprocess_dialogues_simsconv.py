@@ -16,15 +16,15 @@ computed via the embedding API, then K-Means clustering selects outlier
 clusters for the OOD set.  The same split is applied to both versions.
 
 Input
-    ``phase_tree_data/raw_data/SimsConv/Instructed.jsonl``
-    ``phase_tree_data/processed/SimsConv/intermediate/raw_profile_texts.json``
+    ``LongEvoRoleBench/raw_data/SimsConv/Instructed.jsonl``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/raw_profile_texts.json``
 
 Output
-    ``phase_tree_data/processed/SimsConv/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/SimsConv/intermediate/all_dialogues_full.json``
-    ``phase_tree_data/processed/SimsConv/intermediate/character_embeddings.npz``
-    ``phase_tree_data/processed/SimsConv/intermediate/{train,random_test,ood_test}.json``
-    ``phase_tree_data/processed/SimsConv/intermediate/{train,random_test,ood_test}_full.json``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/all_dialogues_full.json``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/character_embeddings.npz``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/{train,random_test,ood_test}_full.json``
 
 Dependencies
     * ``split_utils`` — shared embedding + 3-way split logic
@@ -45,8 +45,8 @@ import numpy as np
 from split_utils import compute_character_embeddings, three_way_split
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 _NAME_PATTERNS = [
     re.compile(r"^You are ([^,]+),"),

@@ -236,7 +236,7 @@ class RetrievalPool:
     Typical lifecycle::
 
         pool = RetrievalPool(samples, embed_client, embed_model,
-                             cache_path="phase_tree_data/processed/RAIDEN/_retrieval_cache/...npz")
+                             cache_path="LongEvoRoleBench/processed/RAIDEN/_retrieval_cache/...npz")
         pool.build_or_load()
         for query in test_samples:
             q_emb = pool.encode_query(query)

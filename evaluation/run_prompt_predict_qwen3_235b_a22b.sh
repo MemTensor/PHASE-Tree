@@ -107,7 +107,7 @@ echo ""
 # Build flat task list across all datasets: ds:method:split:prompt_mode
 ALL_TASKS=()
 for DATASET in "${DATASET_LIST[@]}"; do
-    DATA_DIR="phase_tree_data/processed/${DATASET}"
+    DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
     if [ ! -d "$DATA_DIR" ]; then
         echo "  [SKIP] missing data dir: ${DATA_DIR}"
         continue
@@ -190,7 +190,7 @@ for gpu_slot in $(seq 0 $((NUM_GPU_WORKERS - 1))); do
     for item in "${TASK_ITEMS[@]}"; do
         [ -z "$item" ] && continue
         IFS=':' read -r dataset method split prompt_mode <<< "$item"
-        data_file="phase_tree_data/processed/${dataset}/${method}/${split}.json"
+        data_file="LongEvoRoleBench/processed/${dataset}/${method}/${split}.json"
         out_dir="results/${dataset}/prompt/${RESULTS_TAG}/${method}/${split}"
 
         if [ "$FIRST" = true ]; then

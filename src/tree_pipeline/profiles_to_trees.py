@@ -11,10 +11,10 @@ Datasets **without** pre-existing profile files (e.g. Friends) require
 a dialogue-based construction path and should NOT use this script.
 
 Input
-    ``phase_tree_data/processed/<dataset>/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/raw_profiles.json``
 
 Output
-    ``phase_tree_data/processed/<dataset>/intermediate/attribute_trees.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/attribute_trees.json``
 
 Dependencies
     * ``openai``, ``python-dotenv`` — LLM API access (configured in
@@ -47,7 +47,7 @@ from openai import OpenAI
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 # ---------------------------------------------------------------------------
 # System prompt (English, universal across all datasets)

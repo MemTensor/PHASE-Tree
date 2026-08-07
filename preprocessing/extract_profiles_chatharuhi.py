@@ -15,10 +15,10 @@ This script:
    and ``null`` for genuinely unknown fields.
 
 Input
-    ``phase_tree_data/raw_data/ChatHaruhi/Haruhi_54K_v1.jsonl``
+    ``LongEvoRoleBench/raw_data/ChatHaruhi/Haruhi_54K_v1.jsonl``
 
 Output
-    ``phase_tree_data/processed/ChatHaruhi/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/ChatHaruhi/intermediate/raw_profiles.json``
 
 Dependencies
     * ``openai``, ``python-dotenv`` — LLM API access.
@@ -44,8 +44,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 load_dotenv(PROJECT_ROOT / ".env")
 
 RANDOM_SEED = 42

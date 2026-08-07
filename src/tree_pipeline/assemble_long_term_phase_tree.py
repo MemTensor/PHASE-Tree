@@ -42,7 +42,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 # ---------------------------------------------------------------------------
 # Snapshot resolution (re-uses the same logic as extract_long_term_moments)

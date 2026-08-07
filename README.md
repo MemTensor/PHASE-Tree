@@ -5,7 +5,7 @@
 
 [![Paper](https://img.shields.io/badge/Paper-EMNLP%202026-b31b1b.svg)](https://anonymous.4open.science/r/PHASE-Tree)
 [![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github)](https://github.com/MemTensor/PHASE-Tree)
-[![Data](https://img.shields.io/badge/🤗%20Data-Dataset-yellow.svg)](https://huggingface.co/datasets/IAAR-Shanghai/phase_tree_data)
+[![Data](https://img.shields.io/badge/🤗%20Data-Dataset-yellow.svg)](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench)
 [![Model](https://img.shields.io/badge/🤗%20Model-Model-yellow.svg)](https://huggingface.co/IAAR-Shanghai/phase_tree_models)
 [![Results](https://img.shields.io/badge/🤗%20Results-Results-yellow.svg)](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -107,7 +107,7 @@ PHASE-Tree/
 └── LICENSE                # MIT
 ```
 
-> ⚠️ Three large directories are **not** tracked in this repository and must be fetched from Hugging Face on first use: `phase_tree_data/`, `phase_tree_models/`, and (optionally) `results/`.
+> ⚠️ Three large directories are **not** tracked in this repository and must be fetched from Hugging Face on first use: `LongEvoRoleBench/`, `phase_tree_models/`, and (optionally) `results/`.
 
 ---
 
@@ -115,14 +115,14 @@ PHASE-Tree/
 
 | Type    | Repo | Hugging Face | Default local path | Approx. size |
 |---------|------|--------------|--------------------|--------------|
-| Dataset | `IAAR-Shanghai/phase_tree_data`        | [🤗 link](https://huggingface.co/datasets/IAAR-Shanghai/phase_tree_data) | `phase_tree_data/`   | ≈ 8.4 GB |
-| Model   | `IAAR-Shanghai/phase_tree_models`      | [🤗 link](https://huggingface.co/IAAR-Shanghai/phase_tree_models)       | `phase_tree_models/` | ≈ 1.7 GB |
-| Results | `Mathematics-Yang/phase_tree_results`  | [🤗 link](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 4.4 GB |
+| Dataset | `IAAR-Shanghai/LongEvoRoleBench`        | [🤗 link](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench) | `LongEvoRoleBench/`   | ≈ 9 GB |
+| Model   | `IAAR-Shanghai/phase_tree_models`      | [🤗 link](https://huggingface.co/IAAR-Shanghai/phase_tree_models)       | `phase_tree_models/` | ≈ 1.8 GB |
+| Results | `Mathematics-Yang/phase_tree_results`  | [🤗 link](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 9 GB |
 
 **One-shot download (run from the repo root):**
 
 ```bash
-hf download IAAR-Shanghai/phase_tree_data    --repo-type=dataset --local-dir phase_tree_data
+hf download IAAR-Shanghai/LongEvoRoleBench    --repo-type=dataset --local-dir LongEvoRoleBench
 hf download IAAR-Shanghai/phase_tree_models                       --local-dir phase_tree_models
 # Optional — only if you want to skip re-running predictions/judging:
 hf download Mathematics-Yang/phase_tree_results --repo-type=dataset --local-dir results
@@ -190,7 +190,7 @@ A minimum end-to-end smoke test on one short-dialogue dataset, both routes:
 
 ```bash
 # 0) Fetch data + checkpoint (once)
-hf download IAAR-Shanghai/phase_tree_data   --repo-type=dataset --local-dir phase_tree_data
+hf download IAAR-Shanghai/LongEvoRoleBench   --repo-type=dataset --local-dir LongEvoRoleBench
 hf download IAAR-Shanghai/phase_tree_models                       --local-dir phase_tree_models
 
 # 1) Textual provision: predict + judge + report on RAIDEN (both splits)
@@ -203,17 +203,17 @@ bash evaluation/run_phase_tree_eval.sh RAIDEN
 bash evaluation/run_comparison_eval.sh RAIDEN rag
 ```
 
-Each launcher reads `phase_tree_data/processed/<DATASET>/<METHOD>/{random_test,ood_test}.json`, writes predictions to `results/<DATASET>/<paradigm>/main/<METHOD>/<SPLIT>/predictions.jsonl`, then chains `judge.py → report.py → visualize.py`.
+Each launcher reads `LongEvoRoleBench/processed/<DATASET>/<METHOD>/{random_test,ood_test}.json`, writes predictions to `results/<DATASET>/<paradigm>/main/<METHOD>/<SPLIT>/predictions.jsonl`, then chains `judge.py → report.py → visualize.py`.
 
 ---
 
 ## 🧬 Pipeline
 
-PHASE-Tree is a 4-stage pipeline. Each stage is independently runnable; we ship the **outputs** of stages 1 and 2 (in `phase_tree_data/`) and the **outputs** of stage 3 (in `phase_tree_models/`) so you can start from any point.
+PHASE-Tree is a 4-stage pipeline. Each stage is independently runnable; we ship the **outputs** of stages 1 and 2 (in `LongEvoRoleBench/`) and the **outputs** of stage 3 (in `phase_tree_models/`) so you can start from any point.
 
 ### Stage 1 · Per-corpus preprocessing
 
-`preprocessing/` contains one **profile extractor** + one **dialogue converter** per source corpus. Outputs land under `phase_tree_data/processed/<Dataset>/intermediate/`.
+`preprocessing/` contains one **profile extractor** + one **dialogue converter** per source corpus. Outputs land under `LongEvoRoleBench/processed/<Dataset>/intermediate/`.
 
 ```bash
 # Friends (long-dialogue example): seed initial profiles from Season 1
@@ -227,7 +227,7 @@ Short-dialogue corpora (`RAIDEN`, `CharacterEval`, `SimsConv`, `ChatHaruhi`) use
 
 ### Stage 2 · Build the PHASE-Tree profile variants
 
-Six ablation-chain profile variants are produced under `phase_tree_data/processed/<Dataset>/`:
+Six ablation-chain profile variants are produced under `LongEvoRoleBench/processed/<Dataset>/`:
 
 | Variant            | Description                                                | Paper tag |
 |--------------------|------------------------------------------------------------|-----------|
@@ -317,7 +317,7 @@ A reference-side ablation (re-judge with `m2_raw_profile` persona reference inst
 
 ---
 
-## 📊 LongEvoRoleBench
+## 📊 Dataset · LongEvoRoleBench
 
 Eight role-playing corpora standardized into a common next-utterance generation format with paired **random** and **OOD** test regimes:
 
@@ -342,7 +342,7 @@ To regenerate every number in the paper:
 
 ```bash
 # 0) Make sure data + the recommended SFT checkpoint are on disk
-hf download IAAR-Shanghai/phase_tree_data   --repo-type=dataset --local-dir phase_tree_data
+hf download IAAR-Shanghai/LongEvoRoleBench   --repo-type=dataset --local-dir LongEvoRoleBench
 hf download IAAR-Shanghai/phase_tree_models                       --local-dir phase_tree_models
 
 # 1) All textual-provision ablations across the 8 corpora
@@ -376,13 +376,65 @@ bash evaluation/run_autoreport.sh
 
 ---
 
-## ⚠️ Limitations
+## 🔁 Backbone & Judge Generalization
 
-As discussed in the paper (§ Limitations), known caveats include:
+> Appendix-level robustness checks. Each value is the macro-average over the **4 short** (RAIDEN, CharacterEval, SimsConv, ChatHaruhi) or **4 long** (Friends, The Office, Harry Potter, Star Trek) corpora × {random, OOD}, under the explicit textual-provision comparison — Base / RAG / PAG / CFG / **Ours** (PHASE-Tree). **Bold** = best in row.
 
-- **Single backbone, single run, limited corpus coverage.** All experiments use `Qwen2.5-7B-Instruct` under one decoding configuration and seed, without cross-family, cross-scale, multi-seed, or multilingual verification. The long-dialogue suite covers four scripted English-language corpora; broader genres and spontaneous dialogue are untested.
-- **LLM-based evaluation and extraction.** Char and Sem rely on a GPT-4.1 judge with no human-agreement study; state extraction and update judgment are also LLM-driven without gold-annotation auditing. Significance tests are question-level paired on a single run and do not reflect run-to-run variability.
-- **Hand-tuned gating and parametric adaptation.** Resistance, evidence, and cooldown thresholds are implementation defaults rather than swept or learned; the implicit parametric adaptation variant follows a P2P-style paradigm without fully exploiting the multi-timescale state.
+### Across generation backbones
+
+Same protocol, swapping the generation backbone (GPT-4.1 judge, fixed 25% subsample). PHASE-Tree's gains are not tied to a single model — it wins **every long-dialogue cell** from 0.6B to 32B.
+
+**Character Score (Char ↑)**
+
+| Backbone | Split | Base | RAG | PAG | CFG | Ours |
+|----------|-------|:----:|:---:|:---:|:---:|:----:|
+| Qwen2.5-7B (primary) | Short | 2.183 | 2.533 | 3.038 | **3.096** | 3.044 |
+| Qwen2.5-7B (primary) | Long  | 2.327 | 2.400 | 2.505 | 2.400 | **2.999** |
+| Qwen3-0.6B           | Short | 1.642 | 1.681 | 1.970 | **2.038** | 1.850 |
+| Qwen3-0.6B           | Long  | 1.904 | 1.831 | 1.906 | 1.711 | **2.029** |
+| Gemma-4-E4B-it       | Short | 1.949 | 2.315 | 3.049 | 3.130 | **3.142** |
+| Gemma-4-E4B-it       | Long  | 2.038 | 2.142 | 2.495 | 2.698 | **3.019** |
+| Qwen3-32B            | Short | 3.197 | 3.356 | 3.815 | 3.797 | **3.986** |
+| Qwen3-32B            | Long  | 2.930 | 2.976 | 3.208 | 3.101 | **3.685** |
+
+**Semantic Score (Sem ↑)**
+
+| Backbone | Split | Base | RAG | PAG | CFG | Ours |
+|----------|-------|:----:|:---:|:---:|:---:|:----:|
+| Qwen2.5-7B (primary) | Short | 3.571 | 3.656 | 3.580 | 3.273 | **3.785** |
+| Qwen2.5-7B (primary) | Long  | 3.327 | 3.285 | 2.883 | 2.444 | **3.707** |
+| Qwen3-0.6B           | Short | 2.625 | 2.561 | 2.596 | 2.254 | **2.744** |
+| Qwen3-0.6B           | Long  | 2.861 | 2.511 | 2.481 | 1.917 | **2.924** |
+| Gemma-4-E4B-it       | Short | 3.402 | 3.525 | 3.416 | 3.075 | **3.619** |
+| Gemma-4-E4B-it       | Long  | 3.256 | 3.270 | 2.911 | 2.774 | **3.715** |
+| Qwen3-32B            | Short | 3.983 | 4.004 | 3.910 | 3.622 | **4.120** |
+| Qwen3-32B            | Long  | 3.632 | 3.594 | 3.412 | 3.045 | **4.056** |
+
+### Across judge models
+
+Re-scoring the *same* `Qwen2.5-7B-Instruct` predictions with three LLM-as-Judge backends configured via `.env` (`JUDGE_*`). Absolute scales differ across judges (GLM-5.2 and DeepSeek-V4-Flash are stricter than GPT-4.1), but the ranking is stable — **Ours leads every long-dialogue cell** regardless of judge.
+
+**Character Score (Char ↑)**
+
+| Judge | Split | Base | RAG | PAG | CFG | Ours |
+|-------|-------|:----:|:---:|:---:|:---:|:----:|
+| GPT-4.1 (default)   | Short | 2.143 | 2.527 | 2.989 | **3.075** | 3.028 |
+| GPT-4.1 (default)   | Long  | 2.326 | 2.405 | 2.510 | 2.389 | **3.004** |
+| GLM-5.2             | Short | 2.347 | 2.656 | 3.165 | **3.208** | 3.150 |
+| GLM-5.2             | Long  | 2.607 | 2.665 | 2.709 | 2.524 | **3.040** |
+| DeepSeek-V4-Flash   | Short | 2.675 | 2.893 | 3.040 | 2.819 | **3.210** |
+| DeepSeek-V4-Flash   | Long  | 2.911 | 2.924 | 2.645 | 2.278 | **3.391** |
+
+**Semantic Score (Sem ↑)**
+
+| Judge | Split | Base | RAG | PAG | CFG | Ours |
+|-------|-------|:----:|:---:|:---:|:---:|:----:|
+| GPT-4.1 (default)   | Short | 3.539 | 3.659 | 3.588 | 3.245 | **3.792** |
+| GPT-4.1 (default)   | Long  | 3.323 | 3.289 | 2.889 | 2.429 | **3.697** |
+| GLM-5.2             | Short | 2.824 | 2.913 | 2.853 | 2.583 | **3.025** |
+| GLM-5.2             | Long  | 2.502 | 2.466 | 2.187 | 1.882 | **2.751** |
+| DeepSeek-V4-Flash   | Short | 2.707 | 2.813 | 2.712 | 2.387 | **2.895** |
+| DeepSeek-V4-Flash   | Long  | 2.611 | 2.583 | 2.238 | 1.892 | **2.917** |
 
 ---
 

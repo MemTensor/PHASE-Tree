@@ -57,7 +57,7 @@ from tree_pipeline.evolve_persona import (  # type: ignore
     STATUS_TIER_MARRIED,
 )
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 
 def _is_couple_role(role: str) -> bool:

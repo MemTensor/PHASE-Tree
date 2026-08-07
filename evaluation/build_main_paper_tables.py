@@ -76,7 +76,7 @@ def judge_file(judge: str) -> str:
 
 
 def has_m5(ds: str) -> bool:
-    return (ROOT / f"phase_tree_data/processed/{ds}/m5_dynamic_tree").is_dir()
+    return (ROOT / f"LongEvoRoleBench/processed/{ds}/m5_dynamic_tree").is_dir()
 
 
 def load_jsonl(path: Path) -> list[dict]:

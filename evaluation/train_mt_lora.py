@@ -11,7 +11,7 @@ as the "shared backbone, no character adaptation" reference point.
 
 Inputs
 ------
-A processed JSON file (``phase_tree_data/processed/<DATASET>/m1_context_only/train.json``
+A processed JSON file (``LongEvoRoleBench/processed/<DATASET>/m1_context_only/train.json``
 or any ``m*_*/train.json`` — we ignore everything except ``role``,
 ``input``, ``output``).
 
@@ -27,13 +27,13 @@ Usage
 
     # Single GPU
     python evaluation/train_mt_lora.py \\
-        --train_data phase_tree_data/processed/RAIDEN/m1_context_only/train.json \\
+        --train_data LongEvoRoleBench/processed/RAIDEN/m1_context_only/train.json \\
         --output_dir phase_tree_models/mt_lora/RAIDEN \\
         --epochs 3 --lr 1e-4
 
     # Multi-GPU
     accelerate launch evaluation/train_mt_lora.py \\
-        --train_data phase_tree_data/processed/RAIDEN/m1_context_only/train.json \\
+        --train_data LongEvoRoleBench/processed/RAIDEN/m1_context_only/train.json \\
         --output_dir phase_tree_models/mt_lora/RAIDEN
 
 Hyper-parameters

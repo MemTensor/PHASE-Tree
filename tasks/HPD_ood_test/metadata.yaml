@@ -1,7 +1,7 @@
 assistant_prefill: ''
 ds_kwargs:
   name: HPD_ood_test
-  path: ./phase_tree_data/processed/HPD/m6_phase_tree/ood_test.json
+  path: ./LongEvoRoleBench/processed/HPD/m6_phase_tree/ood_test.json
 train_first_n: null
 response_field: output
 system_message: ''

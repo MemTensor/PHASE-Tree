@@ -53,7 +53,7 @@ EPOCHS="${EPOCHS:-40000}"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-EMPTY}"
 
 # Code uses cwd-relative paths for ds_kwargs.path
-# (e.g. "./phase_tree_data/processed/<DATASET>/m6_phase_tree/train.json"), so we MUST run
+# (e.g. "./LongEvoRoleBench/processed/<DATASET>/m6_phase_tree/train.json"), so we MUST run
 # from the PHASE-Tree repo root.  (chat_templates and tasks are resolved via
 # REPO_ROOT inside the library, so they're cwd-independent.)
 cd "${REPO_DIR}"

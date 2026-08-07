@@ -1,7 +1,7 @@
 assistant_prefill: ''
 ds_kwargs:
   name: TheOffice_random_test
-  path: ./phase_tree_data/processed/TheOffice/m6_phase_tree/random_test.json
+  path: ./LongEvoRoleBench/processed/TheOffice/m6_phase_tree/random_test.json
 train_first_n: null
 response_field: output
 system_message: ''

@@ -1,7 +1,7 @@
 assistant_prefill: ''
 ds_kwargs:
   name: ChatHaruhi_train
-  path: ./phase_tree_data/processed/ChatHaruhi/m6_phase_tree/train.json
+  path: ./LongEvoRoleBench/processed/ChatHaruhi/m6_phase_tree/train.json
 train_first_n: null
 response_field: output
 system_message: ''

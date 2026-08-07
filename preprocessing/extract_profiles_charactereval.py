@@ -6,10 +6,10 @@ for reproducibility and downstream consumption by other preprocessing
 scripts.
 
 Input
-    ``phase_tree_data/raw_data/CharacterEval/data/character_profiles.json``
+    ``LongEvoRoleBench/raw_data/CharacterEval/data/character_profiles.json``
 
 Output
-    ``phase_tree_data/processed/CharacterEval/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/CharacterEval/intermediate/raw_profiles.json``
 
 Usage::
 
@@ -25,8 +25,8 @@ Note
 import json
 from pathlib import Path
 
-RAW_DATA_DIR = Path(__file__).resolve().parent.parent / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = Path(__file__).resolve().parent.parent / "phase_tree_data" / "processed"
+RAW_DATA_DIR = Path(__file__).resolve().parent.parent / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = Path(__file__).resolve().parent.parent / "LongEvoRoleBench" / "processed"
 
 
 def main() -> None:

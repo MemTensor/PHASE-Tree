@@ -402,7 +402,7 @@ def main() -> None:
     run_dir = os.path.abspath(args.run_dir)
     eval_dir = os.path.join(run_dir, "eval_ckpt_judge_scores")
     subset_dir = os.path.join(eval_dir, "subset")
-    data_dir = os.path.join(_REPO_ROOT, "phase_tree_data", "processed")
+    data_dir = os.path.join(_REPO_ROOT, "LongEvoRoleBench", "processed")
     datasets = args.datasets or ALL_DATASETS
 
     if "CUDA_VISIBLE_DEVICES" not in os.environ:

@@ -19,10 +19,10 @@ Three instruction preamble patterns have been observed:
 * ``You go by the name of <Name>. …``
 
 Input
-    ``phase_tree_data/raw_data/SimsConv/Instructed.jsonl``
+    ``LongEvoRoleBench/raw_data/SimsConv/Instructed.jsonl``
 
 Output
-    ``phase_tree_data/processed/SimsConv/intermediate/raw_profiles.json``
+    ``LongEvoRoleBench/processed/SimsConv/intermediate/raw_profiles.json``
 
 Usage::
 
@@ -33,8 +33,8 @@ import json
 import re
 from pathlib import Path
 
-RAW_DATA_DIR = Path(__file__).resolve().parent.parent / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = Path(__file__).resolve().parent.parent / "phase_tree_data" / "processed"
+RAW_DATA_DIR = Path(__file__).resolve().parent.parent / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = Path(__file__).resolve().parent.parent / "LongEvoRoleBench" / "processed"
 
 _NAME_PATTERNS = [
     re.compile(r"^You are ([^,]+),"),

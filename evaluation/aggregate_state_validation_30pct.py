@@ -28,11 +28,15 @@ RATING_FILES = [
 ]
 SCORE = {"supported": 1.0, "partial": 0.5, "unsupported": 0.0}
 CORPORA = ["Friends", "The Office", "Harry Potter", "Star Trek"]
+VALID_LABELS = frozenset({"supported", "partial", "unsupported"})
 
 
 def normalize_label(value: object) -> str:
+    """Parse a rater label; ``unsupported`` must be matched before ``supported``."""
     text = str(value).strip().lower()
-    for label in ("supported", "partial", "unsupported"):
+    if text in VALID_LABELS:
+        return text
+    for label in ("unsupported", "partial", "supported"):
         if label in text:
             return label
     raise ValueError(f"unrecognized label: {value!r}")
@@ -65,7 +69,7 @@ def fleiss_kappa(ratings: list[list[str]]) -> float:
     idx = {c: i for i, c in enumerate(cats)}
     n_items = len(ratings)
     n_raters = 3
-    k = 3
+    k = len(cats)
     mat = [[0] * k for _ in range(n_items)]
     for i, row in enumerate(ratings):
         for lab in row:
@@ -136,7 +140,9 @@ def main() -> None:
             "std_score": round(math.sqrt(var), 4),
             "pct_supported": round(100 * sum(1 for x in labels if x == "supported") / n, 1),
             "pct_partial": round(100 * sum(1 for x in labels if x == "partial") / n, 1),
-            "pct_unsupported": round(100 * sum(1 for x in labels if x == "unsupported") / n, 1),
+            "pct_unsupported": round(
+                100 * sum(1 for x in labels if x == "unsupported") / n, 1
+            ),
             "label_counts": dict(Counter(labels)),
         }
 
@@ -183,7 +189,7 @@ def main() -> None:
 
     summary = {
         "task": "Judge updated template given previous template + extracted evidence",
-        "stance": "lenient / not harsh (3 simulated reviewers)",
+        "stance": "Use supported, partial, and unsupported as assigned by each rater",
         "sampling_quota": subset["quota"],
         "n_snapshots": n_snap,
         "n_field_updates": n,
@@ -215,7 +221,7 @@ def main() -> None:
     )
 
     md = [
-        "# 30% × 3 lenient semantic raters — state template validation\n",
+        "# 30% × 3 semantic raters — state template validation\n",
         "## Task\n",
         "Given **extracted evidence** and the **previous template** (`old_value`), "
         "judge whether the **updated template** (`new_value`) is reasonably supported "
@@ -227,7 +233,7 @@ def main() -> None:
     for corpus, quota in subset["quota"].items():
         md.append(f"| {corpus} | {quota['pool']} | {quota['sampled']} |")
     md.append(f"\n**Snapshots:** {n_snap}  ·  **Field updates:** {n}\n")
-    md.append("## Three lenient raters\n")
+    md.append("## Three raters\n")
     md.append("| Rater | mean score | variance | %supported | %partial | %unsupported |")
     md.append("|---|---:|---:|---:|---:|---:|")
     for rid in ("R1", "R2", "R3"):

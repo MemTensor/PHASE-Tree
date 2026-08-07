@@ -14,11 +14,11 @@ scene with all speakers' real names preserved.
                      departure after S7 and Andy taking over as manager)
 
 Input
-    ``phase_tree_data/raw_data/TheOffice/the_office_season_*.json``
+    ``LongEvoRoleBench/raw_data/TheOffice/the_office_season_*.json``
 
 Output
-    ``phase_tree_data/processed/TheOffice/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/TheOffice/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/TheOffice/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/TheOffice/intermediate/{train,random_test,ood_test}.json``
 
 Usage::
 
@@ -35,8 +35,8 @@ from collections import Counter
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 RANDOM_SEED = 42
 

@@ -174,7 +174,7 @@ resolve_methods() {
         echo "rag pag cfg"
         return
     fi
-    local data_dir="phase_tree_data/processed/${dataset}"
+    local data_dir="LongEvoRoleBench/processed/${dataset}"
     if [ -d "${data_dir}/m5_dynamic_tree" ]; then
         echo "m1_context_only m2_raw_profile m3_naive_rewrite m4_static_tree m5_dynamic_tree m6_phase_tree"
     else

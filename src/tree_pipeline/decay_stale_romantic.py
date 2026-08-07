@@ -30,7 +30,7 @@ from tree_pipeline.evolve_persona import (  # type: ignore
     decay_relationships_value,
 )
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 
 def main() -> None:

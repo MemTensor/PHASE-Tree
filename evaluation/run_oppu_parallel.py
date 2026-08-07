@@ -15,7 +15,7 @@ Output layout::
 Usage::
 
     python evaluation/run_oppu_parallel.py \\
-        --train_data phase_tree_data/processed/RAIDEN/m1_context_only/train.json \\
+        --train_data LongEvoRoleBench/processed/RAIDEN/m1_context_only/train.json \\
         --output_dir phase_tree_models/oppu/RAIDEN \\
         --gpus 0,1,2,3
 """
@@ -53,7 +53,7 @@ def train_role(gpu_id, ds, role, n_samples, args, task_idx, total):
 
     cmd = [
         sys.executable, os.path.join(PROJECT_ROOT, "evaluation", "train_mt_lora.py"),
-        "--train_data", os.path.join(PROJECT_ROOT, "phase_tree_data", "processed", ds, "m1_context_only", "train.json"),
+        "--train_data", os.path.join(PROJECT_ROOT, "LongEvoRoleBench", "processed", ds, "m1_context_only", "train.json"),
         "--output_dir", role_dir,
         "--filter_role", role,
         "--model", args.model,
@@ -107,7 +107,7 @@ def main():
 
     tasks = []
     for ds in datasets:
-        train_path = os.path.join(PROJECT_ROOT, "phase_tree_data", "processed", ds, "m1_context_only", "train.json")
+        train_path = os.path.join(PROJECT_ROOT, "LongEvoRoleBench", "processed", ds, "m1_context_only", "train.json")
         for role, n in list_roles(train_path):
             tasks.append((ds, role, n))
 

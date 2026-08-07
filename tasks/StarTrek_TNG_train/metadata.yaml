@@ -1,7 +1,7 @@
 assistant_prefill: ''
 ds_kwargs:
   name: StarTrek_TNG_train
-  path: ./phase_tree_data/processed/StarTrek_TNG/m6_phase_tree/train.json
+  path: ./LongEvoRoleBench/processed/StarTrek_TNG/m6_phase_tree/train.json
 train_first_n: null
 response_field: output
 system_message: ''

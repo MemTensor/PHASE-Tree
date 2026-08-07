@@ -12,11 +12,11 @@ Concurrency is handled via ``asyncio`` + ``AsyncOpenAI`` with
 incremental checkpointing so that long runs can be safely resumed.
 
 Input
-    ``phase_tree_data/processed/<dataset>/intermediate/attribute_trees.json``
-    ``phase_tree_data/processed/<dataset>/intermediate/<split>.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/attribute_trees.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/<split>.json``
 
 Output
-    ``phase_tree_data/processed/<dataset>/intermediate/<split>_phase_updated_trees.json``
+    ``LongEvoRoleBench/processed/<dataset>/intermediate/<split>_phase_updated_trees.json``
 
 Dependencies
     * ``openai``, ``python-dotenv`` — LLM API access (configured in
@@ -56,7 +56,7 @@ from openai import AsyncOpenAI
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 CHECKPOINT_EVERY = 50
 

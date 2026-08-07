@@ -15,13 +15,13 @@ Usage::
 
     # Single method + split
     python evaluation/predict_hypernet.py \\
-        --data phase_tree_data/processed/RAIDEN/m6_phase_tree/random_test.json \\
+        --data LongEvoRoleBench/processed/RAIDEN/m6_phase_tree/random_test.json \\
         --output_dir results/RAIDEN/hypernet_p2p/main/m6_phase_tree/random_test \\
         --checkpoint phase_tree_models/p2p_pretrained/hypermod.pt
 
     # With per-character LoRA saving
     python evaluation/predict_hypernet.py \\
-        --data phase_tree_data/processed/RAIDEN/m2_raw_profile/random_test.json \\
+        --data LongEvoRoleBench/processed/RAIDEN/m2_raw_profile/random_test.json \\
         --output_dir results/RAIDEN/hypernet_p2p/main/m2_raw_profile/random_test \\
         --checkpoint phase_tree_models/p2p_pretrained/hypermod.pt \\
         --save_loras_dir results/RAIDEN/hypernet_p2p/generated_loras/m2_raw_profile
@@ -35,7 +35,7 @@ Usage::
     # Disk usage bounded by chunk_size * ~6MB instead of n_profiles * ~6MB
     python evaluation/predict_hypernet.py \\
         --chunk_size 500 \\
-        --data phase_tree_data/processed/ChatHaruhi/m6_phase_tree/random_test.json \\
+        --data LongEvoRoleBench/processed/ChatHaruhi/m6_phase_tree/random_test.json \\
         --output_dir results/ChatHaruhi/hypernet_p2p/main/m6_phase_tree/random_test \\
         --checkpoint phase_tree_models/p2p_pretrained/hypermod.pt
 """
@@ -1396,10 +1396,10 @@ def multi_main():
     ``tasks_gpu0.json`` is a JSON list::
 
         [
-          {"data": "phase_tree_data/.../m2_raw_profile/random_test.json",
+          {"data": "LongEvoRoleBench/.../m2_raw_profile/random_test.json",
            "output_dir": "results/.../m2_raw_profile/random_test",
            "save_loras_dir": "results/.../generated_loras/m2_raw_profile"},
-          {"data": "phase_tree_data/.../m2_raw_profile/ood_test.json",
+          {"data": "LongEvoRoleBench/.../m2_raw_profile/ood_test.json",
            "output_dir": "results/.../m2_raw_profile/ood_test",
            "save_loras_dir": "results/.../generated_loras/m2_raw_profile"}
         ]

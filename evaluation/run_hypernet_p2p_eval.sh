@@ -61,7 +61,7 @@ export PYTHONPATH="${ROOT_DIR}/src:${ROOT_DIR}:${PYTHONPATH:-}"
 DATASET="${1:-${DATASET:-RAIDEN}}"
 MODE_ARG="${2:-${MODE:-}}"
 
-DATA_DIR="phase_tree_data/processed/${DATASET}"
+DATA_DIR="LongEvoRoleBench/processed/${DATASET}"
 if [ -z "$MODE_ARG" ]; then
     if [ -d "${DATA_DIR}/m5_dynamic_tree" ]; then
         MODE_ARG="long-term"

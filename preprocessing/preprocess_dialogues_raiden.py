@@ -19,13 +19,13 @@ a given character are assigned to exactly one split:
 * ``ood_test.json``     — characters from small, isolated clusters.
 
 Input
-    ``phase_tree_data/raw_data/RAIDEN/release_data/dialogue.json``
-    ``phase_tree_data/processed/RAIDEN/intermediate/raw_profile_texts.json``
+    ``LongEvoRoleBench/raw_data/RAIDEN/release_data/dialogue.json``
+    ``LongEvoRoleBench/processed/RAIDEN/intermediate/raw_profile_texts.json``
 
 Output
-    ``phase_tree_data/processed/RAIDEN/intermediate/all_dialogues.json``
-    ``phase_tree_data/processed/RAIDEN/intermediate/character_embeddings.npz``
-    ``phase_tree_data/processed/RAIDEN/intermediate/{train,random_test,ood_test}.json``
+    ``LongEvoRoleBench/processed/RAIDEN/intermediate/all_dialogues.json``
+    ``LongEvoRoleBench/processed/RAIDEN/intermediate/character_embeddings.npz``
+    ``LongEvoRoleBench/processed/RAIDEN/intermediate/{train,random_test,ood_test}.json``
 
 Dependencies
     * ``split_utils`` — shared embedding + 3-way split logic
@@ -45,8 +45,8 @@ import numpy as np
 from split_utils import compute_character_embeddings, three_way_split
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DATA_DIR = PROJECT_ROOT / "phase_tree_data" / "raw_data"
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+RAW_DATA_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "raw_data"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 # ---------------------------------------------------------------------------
 # Step 1: dialogue conversion

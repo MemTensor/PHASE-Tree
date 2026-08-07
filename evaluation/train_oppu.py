@@ -25,7 +25,7 @@ Usage
 ::
 
     python evaluation/train_oppu.py \\
-        --train_data phase_tree_data/processed/RAIDEN/m1_context_only/train.json \\
+        --train_data LongEvoRoleBench/processed/RAIDEN/m1_context_only/train.json \\
         --output_dir phase_tree_models/oppu/RAIDEN \\
         --epochs 5 --lr 2e-4
 

@@ -36,7 +36,7 @@ HF + a batched CFG processor is the cleanest correct implementation.
 Usage::
 
     python evaluation/predict_cfg.py \\
-        --data        phase_tree_data/processed/RAIDEN/m6_phase_tree/random_test.json \\
+        --data        LongEvoRoleBench/processed/RAIDEN/m6_phase_tree/random_test.json \\
         --output_dir  results/RAIDEN/comparison/main/cfg/random_test \\
         --guidance_scale 1.5
 

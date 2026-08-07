@@ -53,7 +53,7 @@ from tree_pipeline.evolve_persona import (  # type: ignore
     _split_relationships_paren_aware,
 )
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 # Map "current role on A" -> "canonical inverse role on B" used by the
 # reciprocity-propagation pass.  Asymmetric encounter-style roles are

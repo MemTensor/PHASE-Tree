@@ -23,7 +23,7 @@ Usage
 ::
 
     python evaluation/predict_oppu.py \\
-        --data         phase_tree_data/processed/RAIDEN/m1_context_only/random_test.json \\
+        --data         LongEvoRoleBench/processed/RAIDEN/m1_context_only/random_test.json \\
         --oppu_root    phase_tree_models/oppu/RAIDEN \\
         --output_dir   results/RAIDEN/comparison/main/oppu/random_test
 """

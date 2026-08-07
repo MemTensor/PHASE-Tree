@@ -38,7 +38,7 @@ from tree_pipeline.evolve_persona import (  # type: ignore
     _split_relationships_paren_aware,
 )
 
-PROCESSED_DIR = PROJECT_ROOT / "phase_tree_data" / "processed"
+PROCESSED_DIR = PROJECT_ROOT / "LongEvoRoleBench" / "processed"
 
 # Plural -> singular (used to repaint "close friends are X, Y" → "close friend is X, close friend is Y").
 PLURAL_TO_SINGULAR = {
