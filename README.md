@@ -3,7 +3,7 @@
 # 🌳 PHASE-Tree
 ### Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue
 
-[![Paper](https://img.shields.io/badge/Paper-EMNLP%202026-b31b1b.svg)](https://anonymous.4open.science/r/PHASE-Tree)
+[![Paper](https://img.shields.io/badge/arXiv-2608.06975-b31b1b.svg)](https://arxiv.org/abs/2608.06975)
 [![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github)](https://github.com/MemTensor/PHASE-Tree)
 [![Data](https://img.shields.io/badge/🤗%20Data-Dataset-yellow.svg)](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench)
 [![Model](https://img.shields.io/badge/🤗%20Model-Model-yellow.svg)](https://huggingface.co/IAAR-Shanghai/phase_tree_models)
@@ -26,7 +26,7 @@
 
 ## 📖 Abstract
 
-> Long-horizon role-playing requires a character to remain recognizable while evolving with the narrative, yet existing methods and benchmarks mainly test persona preservation or memory recall rather than whether a model can speak from a character's currently evolved state — a failure mode we call **stale-state failure**. We introduce **PHASE-Tree**, a multi-timescale character-state tree with an immutable identity root and mutable `persona`, `session`, and `moment` strata, where each field is an addressable update target supporting localized intra-episode and cross-episode evolution. We further introduce **LongEvoRoleBench**, an evaluation suite for long-horizon character-state evolution: four long-dialogue corpora form the core cross-episode evolution test, and four short-dialogue corpora provide within-scene state-tracking checks under the same generation format. PHASE-Tree can condition generation via **explicit textual provision** (serializing the tree into the prompt) or **implicit parametric adaptation** (encoding it into LoRA weights). On LongEvoRoleBench, textual provision achieves the best score in **21 of 24** internal-ablation dataset–metric cells and improves long-dialogue macro averages over the strongest textual-provision external baseline for each metric by **+0.49 Char (+19.6%)**, **+0.41 Sem (+12.4%)**, and **+0.04 Emb (+15.0%)**.
+> Long-horizon role-playing demands that characters remain recognizable as they evolve with the narrative. Yet existing work falls short on two fronts: representations are typically static profiles that cannot be updated locally without destabilizing unchanged traits, and benchmarks mainly test persona preservation and memory recall rather than whether a model speaks from a character's currently evolved state — a failure mode we call **stale-state failure**. We address both. **PHASE-Tree** is a multi-timescale character-state tree with an immutable identity root and mutable `persona`, `session`, and `moment` layers, making each mutable field an addressable target for localized within- and cross-episode updates. It conditions generation through **explicit textual provision** or **implicit parametric adaptation**. To measure evolved-state generation, we introduce **LongEvoRoleBench**, which pairs four long-dialogue corpora for cross-episode evolution with four short-dialogue corpora as within-scene state-tracking checks, under a unified next-utterance protocol. On the long-dialogue core, textual PHASE-Tree ranks first in **11 of 12** dataset–metric cells against internal variants and **all 12** cells against external textual baselines, improving character-level, semantic, and embedding scores by **19.7%**, **12.4%**, and **15.1%** respectively. In a blinded 200-response study, human ratings correlate with the GPT-4.1 judge (Pearson *r* = 0.65); on descriptive *n* = 10 PT and NR prompt subsets, the Overall difference is +0.20. The long-dialogue Sem advantage persists across LLM judges and generation backbones.
 
 ## 🧭 At a Glance
 
@@ -45,8 +45,8 @@
 
 ## 📰 News
 
+- **2026-08** &nbsp; Preprint available on arXiv: [arXiv:2608.06975](https://arxiv.org/abs/2608.06975). If you find this codebase helpful, please [cite this work](#-citation).
 - **2026-05** &nbsp; Code, models, data, and full evaluation results released on GitHub + Hugging Face.
-- **2026-05** &nbsp; Paper submitted to EMNLP 2026.
 
 ---
 
@@ -56,11 +56,11 @@ On **LongEvoRoleBench** with `Qwen2.5-7B-Instruct` as the backbone. Throughout t
 
 | Setting | Result |
 |---------|--------|
-| 🏅 **Internal ablation (textual)** | PHASE-Tree achieves the best score in **21 of 24** dataset–metric cells. |
-| 📈 **External baselines (long-dialogue macro, textual block)** | **Ours (textual)** improves over the strongest textual-provision baseline for each metric by **+0.49 Char (+19.6%)** vs PAG, **+0.41 Sem (+12.4%)** vs RAG, and **+0.04 Emb (+15.0%)** vs RAG. |
-| 💸 **Short-dialogue token efficiency** | **Ours (textual)** uses **471** prompt tokens — **43% fewer than CFG**, **&lt;50% of PAG** — while leading on Sem. |
-| 🧩 **Parametric adaptation** | **Ours (parametric)** leads Sem on both short- and long-dialogue panels (3.748 / 3.434) and ties on long-dialogue Emb (0.283) at *zero* profile-token overhead. |
-| 🔬 **Statistical significance** | PT vs. NR and PT vs. ST (internal) and Ours-vs-strongest-baseline-in-block (external) are all significant at paired *t*-test *p* < 0.001. |
+| 🏅 **Internal ablation (textual)** | PHASE-Tree achieves the best score in **21 of 24** dataset–metric cells overall, and leads **11 of 12** on the long-dialogue core. |
+| 📈 **External baselines (long-dialogue macro, textual block)** | **Ours (textual)** ranks first in **all 12** long-dialogue cells, improving over the strongest textual-provision baseline for each metric by **+0.49 Char (+19.7%)** vs PAG, **+0.41 Sem (+12.4%)** vs RAG, and **+0.04 Emb (+15.1%)** vs RAG. |
+| 💸 **Short-dialogue token efficiency** | **Ours (textual)** uses **471** prompt tokens — **24–55% smaller** than RP, RAG, PAG, and CFG — while attaining the highest Sem among them. |
+| 🧩 **Parametric adaptation** | **Ours (parametric)** leads Sem on both short- and long-dialogue panels (3.748 / 3.434) and ties for first on long-dialogue Emb (0.283) at *zero* profile-token overhead. |
+| 🔬 **Effect sizes** | Rankings are interpreted through paired Cohen's *d* rather than *p* alone (per-cell samples reach ~1.6 × 10⁴). Long-dialogue macro *d*: PT vs. NR Sem 0.25 / Emb 0.26; PT vs. ST Sem 0.40 / Emb 0.30; Ours vs. MT-LoRA Char 0.72 / Sem 0.29 / Emb 0.19 (borderline). |
 
 ### Headline numbers (long-dialogue, macro-average over 4 corpora × {random, OOD})
 
@@ -70,12 +70,12 @@ On **LongEvoRoleBench** with `Qwen2.5-7B-Instruct` as the backbone. Throughout t
 | Textual Provision     | RAG                       | 2.405 | 3.289 | 0.273 |
 | Textual Provision     | PAG                       | 2.510 | 2.889 | 0.255 |
 | Textual Provision     | CFG                       | 2.389 | 2.429 | 0.225 |
-| Textual Provision     | **Ours (textual)**        | **3.003** | **3.697** | **0.314** |
+| Textual Provision     | **Ours (textual)**        | **3.004** | **3.697** | **0.314** |
 | Parametric Adaptation | MT-LoRA                   | 2.269 | 3.428 | 0.283 |
 | Parametric Adaptation | Activation Steering       | 2.381 | 2.350 | 0.249 |
 | Parametric Adaptation | OPPU                      | 2.376 | 3.141 | 0.283 |
 | Parametric Adaptation | P2P                       | 2.396 | 3.410 | 0.276 |
-| Parametric Adaptation | **Ours (parametric)**     | 2.307 | **3.434** | **0.283** |
+| Parametric Adaptation | **Ours (parametric)**     | 2.306 | **3.434** | **0.283** |
 
 > Bold cells mark the best method *within each paradigm block*. See [§ Reproducing the Paper](#-reproducing-the-paper) for the full per-dataset tables.
 
@@ -435,6 +435,28 @@ Re-scoring the *same* `Qwen2.5-7B-Instruct` predictions with three LLM-as-Judge 
 | GLM-5.2             | Long  | 2.502 | 2.466 | 2.187 | 1.882 | **2.751** |
 | DeepSeek-V4-Flash   | Short | 2.707 | 2.813 | 2.712 | 2.387 | **2.895** |
 | DeepSeek-V4-Flash   | Long  | 2.611 | 2.583 | 2.238 | 1.892 | **2.917** |
+
+---
+
+## 📌 Citation
+
+If you find this codebase helpful, please cite this work:
+
+```bibtex
+@article{tang2026phasetree,
+  title         = {PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue},
+  author        = {Tang, Bo and Yang, Jianan and Zhu, Junyi and Wu, Yiquan and Zhao, Rui and Yang, Zhengyu and Zhang, Yang and Xiong, Feiyu and Li, Zhiyu and Shen, Jiajun},
+  journal       = {arXiv preprint arXiv:2608.06975},
+  year          = {2026},
+  eprint        = {2608.06975},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  doi           = {10.48550/arXiv.2608.06975},
+  url           = {https://arxiv.org/abs/2608.06975}
+}
+```
+
+GitHub's *Cite this repository* button reads [`CITATION.cff`](CITATION.cff), which resolves to the same entry.
 
 ---
 

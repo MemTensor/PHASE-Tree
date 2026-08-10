@@ -3,7 +3,7 @@
 # 🌳 PHASE-Tree
 ### 在长程角色扮演对话中建模角色状态的演化
 
-[![Paper](https://img.shields.io/badge/Paper-EMNLP%202026-b31b1b.svg)](https://anonymous.4open.science/r/PHASE-Tree)
+[![Paper](https://img.shields.io/badge/arXiv-2608.06975-b31b1b.svg)](https://arxiv.org/abs/2608.06975)
 [![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github)](https://github.com/MemTensor/PHASE-Tree)
 [![Data](https://img.shields.io/badge/🤗%20Data-Dataset-yellow.svg)](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench)
 [![Model](https://img.shields.io/badge/🤗%20Model-Model-yellow.svg)](https://huggingface.co/IAAR-Shanghai/phase_tree_models)
@@ -26,7 +26,7 @@
 
 ## 📖 摘要
 
-> 长程角色扮演要求角色在故事推进中既保持可辨识度，又能跟随情节演化；而现有方法与基准大多在测"人格保持"或"记忆召回"，并未检验模型能否从角色**当前演化后的状态**出发回应——我们把这种失败模式称为 **stale-state failure（陈旧状态失败）**。我们提出 **PHASE-Tree**：一棵多时间尺度的角色状态树，根节点是不可变身份，下面是可变的 `persona`、`session`、`moment` 三层；每个字段都是可独立寻址的更新目标，支持场景内与跨剧集的局部演化。我们同时提出 **LongEvoRoleBench**——一个面向长程角色状态演化的评测套件：4 个长对话语料构成"跨剧集演化"的核心测试；4 个短对话语料则在同一生成格式下提供"场景内状态跟踪"的检查。PHASE-Tree 可以通过 **explicit textual provision**（把树序列化进 prompt）或 **implicit parametric adaptation**（把树编码进 LoRA 权重）两种范式条件生成。在 LongEvoRoleBench 上，textual provision 在 **24 个内部消融格子中拿下 21 个最佳**，并在长对话宏平均上相对各指标最强的 textual-provision 外部 baseline 分别提升 **+0.49 Char（+19.6%）**、**+0.41 Sem（+12.4%）**、**+0.04 Emb（+15.0%）**。
+> 长程角色扮演要求角色在随故事演化的同时保持可辨识度。然而已有工作在两个方面存在不足：角色表示通常是静态档案，无法在不扰动其余未变特质的前提下做局部更新；评测基准则大多在测"人格保持"与"记忆召回"，而非检验模型能否从角色**当前演化后的状态**出发说话——我们把这种失败模式称为 **stale-state failure（陈旧状态失败）**。我们同时解决这两点。**PHASE-Tree** 是一棵多时间尺度的角色状态树，根节点是不可变身份，下面是可变的 `persona`、`session`、`moment` 三层，使每个可变字段都成为可独立寻址的更新目标，支持场景内与跨剧集的局部更新。它通过 **explicit textual provision**（把树序列化进 prompt）或 **implicit parametric adaptation**（把树编码进 LoRA 权重）两条路径条件生成。为衡量"演化后状态"的生成质量，我们提出 **LongEvoRoleBench**：在统一的下一句生成协议下，把 4 个长对话语料（跨剧集演化）与 4 个短对话语料（场景内状态跟踪检查）配对。在长对话核心上，textual PHASE-Tree 相对内部变体在 **12 个数据集–指标格子中拿下 11 个第一**，相对外部 textual baseline 则 **12 个格子全部第一**，将角色级、语义、embedding 分数分别提升 **19.7%**、**12.4%**、**15.1%**。在 200 条回复的盲评研究中，人类评分与 GPT-4.1 judge 相关（Pearson *r* = 0.65）；在描述性的 *n* = 10 PT 与 NR prompt 子集上，Overall 差值为 +0.20。长对话 Sem 优势在不同 LLM judge 与生成 backbone 下均保持。
 
 ## 🧭 速览
 
@@ -45,8 +45,8 @@
 
 ## 📰 动态
 
+- **2026-08** &nbsp; 预印本已上线 arXiv：[arXiv:2608.06975](https://arxiv.org/abs/2608.06975)。如果这个代码库对你有帮助，请[引用这项工作](#-引用)。
 - **2026-05** &nbsp; 代码、模型、数据、完整评测结果发布于 GitHub + Hugging Face。
-- **2026-05** &nbsp; 论文投稿 EMNLP 2026。
 
 ---
 
@@ -56,11 +56,11 @@
 
 | 设置 | 结果 |
 |------|------|
-| 🏅 **内部消融（textual）** | PHASE-Tree 在 **24 个数据集–指标格子中拿下 21 个最佳**。 |
-| 📈 **外部 baseline（长对话宏平均, textual 块）** | **Ours (textual)** 相比该指标上最强的 textual-provision baseline 分别提升 **+0.49 Char（+19.6%）**（vs PAG）、**+0.41 Sem（+12.4%）**（vs RAG）、**+0.04 Emb（+15.0%）**（vs RAG）。 |
-| 💸 **短对话 token 效率** | **Ours (textual)** 平均仅 **471** 个 prompt token，比 CFG **少 43%**、不到 PAG 的 **一半**，同时 Sem 领先。 |
+| 🏅 **内部消融（textual）** | PHASE-Tree 在全部 **24 个数据集–指标格子中拿下 21 个最佳**，在长对话核心的 **12 个格子中领先 11 个**。 |
+| 📈 **外部 baseline（长对话宏平均, textual 块）** | **Ours (textual)** 在长对话 **12 个格子中全部第一**，相比该指标上最强的 textual-provision baseline 分别提升 **+0.49 Char（+19.7%）**（vs PAG）、**+0.41 Sem（+12.4%）**（vs RAG）、**+0.04 Emb（+15.1%）**（vs RAG）。 |
+| 💸 **短对话 token 效率** | **Ours (textual)** 平均仅 **471** 个 prompt token，比 RP、RAG、PAG、CFG **小 24–55%**，同时 Sem 在这几者中最高。 |
 | 🧩 **Parametric Adaptation** | **Ours (parametric)** 在零额外 profile-token 开销下，短对话 Sem 3.748 / 长对话 Sem 3.434 双双第一，长对话 Emb 0.283 并列第一。 |
-| 🔬 **统计显著性** | 内部 PT vs. NR、PT vs. ST，以及外部"Ours vs. 同块最强 baseline"全部通过 paired *t*-test，*p* < 0.001。 |
+| 🔬 **效应量** | 排序主要通过 paired Cohen's *d* 解读，而非只看 *p*（单格样本量可达约 1.6 × 10⁴）。长对话宏平均 *d*：PT vs. NR Sem 0.25 / Emb 0.26；PT vs. ST Sem 0.40 / Emb 0.30；Ours vs. MT-LoRA Char 0.72 / Sem 0.29 / Emb 0.19（临界）。 |
 
 ### 头号指标（长对话，4 个语料 × {random, OOD} 的宏平均）
 
@@ -70,12 +70,12 @@
 | Textual Provision       | RAG                        | 2.405 | 3.289 | 0.273 |
 | Textual Provision       | PAG                        | 2.510 | 2.889 | 0.255 |
 | Textual Provision       | CFG                        | 2.389 | 2.429 | 0.225 |
-| Textual Provision       | **Ours (textual)**         | **3.003** | **3.697** | **0.314** |
+| Textual Provision       | **Ours (textual)**         | **3.004** | **3.697** | **0.314** |
 | Parametric Adaptation   | MT-LoRA                    | 2.269 | 3.428 | 0.283 |
 | Parametric Adaptation   | Activation Steering        | 2.381 | 2.350 | 0.249 |
 | Parametric Adaptation   | OPPU                       | 2.376 | 3.141 | 0.283 |
 | Parametric Adaptation   | P2P                        | 2.396 | 3.410 | 0.276 |
-| Parametric Adaptation   | **Ours (parametric)**      | 2.307 | **3.434** | **0.283** |
+| Parametric Adaptation   | **Ours (parametric)**      | 2.306 | **3.434** | **0.283** |
 
 > 加粗格子表示在所属范式块内的最佳。完整逐数据集结果见 [§ 复现论文](#-复现论文)。
 
@@ -435,6 +435,28 @@ bash evaluation/run_autoreport.sh
 | GLM-5.2            | Long  | 2.502 | 2.466 | 2.187 | 1.882 | **2.751** |
 | DeepSeek-V4-Flash  | Short | 2.707 | 2.813 | 2.712 | 2.387 | **2.895** |
 | DeepSeek-V4-Flash  | Long  | 2.611 | 2.583 | 2.238 | 1.892 | **2.917** |
+
+---
+
+## 📌 引用
+
+如果这个代码库对你有帮助，请引用这项工作：
+
+```bibtex
+@article{tang2026phasetree,
+  title         = {PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue},
+  author        = {Tang, Bo and Yang, Jianan and Zhu, Junyi and Wu, Yiquan and Zhao, Rui and Yang, Zhengyu and Zhang, Yang and Xiong, Feiyu and Li, Zhiyu and Shen, Jiajun},
+  journal       = {arXiv preprint arXiv:2608.06975},
+  year          = {2026},
+  eprint        = {2608.06975},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  doi           = {10.48550/arXiv.2608.06975},
+  url           = {https://arxiv.org/abs/2608.06975}
+}
+```
+
+GitHub 页面右侧的 *Cite this repository* 按钮读取的是 [`CITATION.cff`](CITATION.cff)，解析结果与上面这条一致。
 
 ---
 

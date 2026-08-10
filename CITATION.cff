@@ -1,0 +1,73 @@
+cff-version: 1.2.0
+message: "If you find this codebase helpful, please cite this work."
+title: "PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue"
+abstract: "PHASE-Tree is a multi-timescale character-state tree with an immutable identity root and mutable persona, session, and moment layers for long-horizon role-playing dialogue. This repository also releases LongEvoRoleBench, an evaluation suite for long-horizon character-state evolution."
+type: software
+license: MIT
+repository-code: "https://github.com/MemTensor/PHASE-Tree"
+keywords:
+  - role-playing dialogue
+  - character-state evolution
+  - long-horizon dialogue
+  - large language models
+  - benchmark
+authors:
+  - given-names: Bo
+    family-names: Tang
+    affiliation: "MemTensor (Shanghai) Technology"
+  - given-names: Jianan
+    family-names: Yang
+    affiliation: "MemTensor (Shanghai) Technology"
+  - given-names: Junyi
+    family-names: Zhu
+    affiliation: "KU Leuven"
+  - given-names: Yiquan
+    family-names: Wu
+    affiliation: "Zhejiang University"
+  - given-names: Rui
+    family-names: Zhao
+    affiliation: "University of Chinese Academy of Sciences"
+  - given-names: Zhengyu
+    family-names: Yang
+    affiliation: "Sinar Mas Paper (China) Investment Co., Ltd"
+  - given-names: Yang
+    family-names: Zhang
+    affiliation: "The Hong Kong Polytechnic University"
+  - given-names: Feiyu
+    family-names: Xiong
+    affiliation: "MemTensor (Shanghai) Technology"
+  - given-names: Zhiyu
+    family-names: Li
+    affiliation: "MemTensor (Shanghai) Technology"
+  - given-names: Jiajun
+    family-names: Shen
+    affiliation: "MemTensor (Shanghai) Technology"
+preferred-citation:
+  type: article
+  title: "PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue"
+  year: 2026
+  month: 8
+  journal: "arXiv preprint arXiv:2608.06975"
+  doi: 10.48550/arXiv.2608.06975
+  url: "https://arxiv.org/abs/2608.06975"
+  authors:
+    - given-names: Bo
+      family-names: Tang
+    - given-names: Jianan
+      family-names: Yang
+    - given-names: Junyi
+      family-names: Zhu
+    - given-names: Yiquan
+      family-names: Wu
+    - given-names: Rui
+      family-names: Zhao
+    - given-names: Zhengyu
+      family-names: Yang
+    - given-names: Yang
+      family-names: Zhang
+    - given-names: Feiyu
+      family-names: Xiong
+    - given-names: Zhiyu
+      family-names: Li
+    - given-names: Jiajun
+      family-names: Shen
