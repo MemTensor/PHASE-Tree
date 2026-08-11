@@ -440,8 +440,6 @@ Re-scoring the *same* `Qwen2.5-7B-Instruct` predictions with three LLM-as-Judge 
 
 ## 📌 Citation
 
-If you find this codebase helpful, please cite this work:
-
 ```bibtex
 @article{tang2026phasetree,
   title         = {PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue},

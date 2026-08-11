@@ -440,8 +440,6 @@ bash evaluation/run_autoreport.sh
 
 ## 📌 引用
 
-如果这个代码库对你有帮助，请引用这项工作：
-
 ```bibtex
 @article{tang2026phasetree,
   title         = {PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue},
