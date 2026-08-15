@@ -43,13 +43,6 @@
 
 ---
 
-## 📰 动态
-
-- **2026-08** &nbsp; 预印本已上线 arXiv：[arXiv:2608.06975](https://arxiv.org/abs/2608.06975)。如果这个代码库对你有帮助，请[引用这项工作](#-引用)。
-- **2026-05** &nbsp; 代码、模型、数据、完整评测结果发布于 GitHub + Hugging Face。
-
----
-
 ## 🏆 主要结果
 
 在 **LongEvoRoleBench**（backbone = `Qwen2.5-7B-Instruct`）上。下面统一用 **Ours (textual)** 和 **Ours (parametric)** 来区分两种条件生成范式——它们都是 PHASE-Tree，只是分别处在不同的 baseline 块里（论文 Table 1 = 内部消融，Table 2 = 外部对比，里面有两个 `Ours` 列并排）。
@@ -117,7 +110,7 @@ PHASE-Tree/
 |---------|------|--------------|--------------|----------|
 | 数据集   | `IAAR-Shanghai/LongEvoRoleBench`        | [🤗 链接](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench) | `LongEvoRoleBench/`   | ≈ 9 GB |
 | 模型     | `IAAR-Shanghai/phase_tree_models`      | [🤗 链接](https://huggingface.co/IAAR-Shanghai/phase_tree_models)       | `phase_tree_models/` | ≈ 1.8 GB |
-| 评测结果 | `Mathematics-Yang/phase_tree_results`  | [🤗 链接](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 9 GB |
+| 评测结果 | `Mathematics-Yang/phase_tree_results`  | [🤗 链接](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 6.5 GB |
 
 **一键下载（在仓库根目录执行）：**
 
@@ -441,16 +434,14 @@ bash evaluation/run_autoreport.sh
 ## 📌 引用
 
 ```bibtex
-@article{tang2026phasetree,
+@misc{tang2026phasetree,
   title         = {PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue},
-  author        = {Tang, Bo and Yang, Jianan and Zhu, Junyi and Wu, Yiquan and Zhao, Rui and Yang, Zhengyu and Zhang, Yang and Xiong, Feiyu and Li, Zhiyu and Shen, Jiajun},
-  journal       = {arXiv preprint arXiv:2608.06975},
+  author        = {Bo Tang and Jianan Yang and Junyi Zhu and Yiquan Wu and Rui Zhao and Zhengyu Yang and Yang Zhang and Feiyu Xiong and Zhiyu Li and Jiajun Shen},
   year          = {2026},
   eprint        = {2608.06975},
   archivePrefix = {arXiv},
   primaryClass  = {cs.CL},
-  doi           = {10.48550/arXiv.2608.06975},
-  url           = {https://arxiv.org/abs/2608.06975}
+  url           = {https://arxiv.org/abs/2608.06975},
 }
 ```
 

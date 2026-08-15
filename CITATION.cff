@@ -43,13 +43,15 @@ authors:
     family-names: Shen
     affiliation: "MemTensor (Shanghai) Technology"
 preferred-citation:
-  type: article
+  type: generic
   title: "PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue"
   year: 2026
   month: 8
-  journal: "arXiv preprint arXiv:2608.06975"
-  doi: 10.48550/arXiv.2608.06975
   url: "https://arxiv.org/abs/2608.06975"
+  identifiers:
+    - type: other
+      value: "arXiv:2608.06975"
+      description: "arXiv preprint"
   authors:
     - given-names: Bo
       family-names: Tang

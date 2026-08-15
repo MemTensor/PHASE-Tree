@@ -43,13 +43,6 @@
 
 ---
 
-## 📰 News
-
-- **2026-08** &nbsp; Preprint available on arXiv: [arXiv:2608.06975](https://arxiv.org/abs/2608.06975). If you find this codebase helpful, please [cite this work](#-citation).
-- **2026-05** &nbsp; Code, models, data, and full evaluation results released on GitHub + Hugging Face.
-
----
-
 ## 🏆 Highlights
 
 On **LongEvoRoleBench** with `Qwen2.5-7B-Instruct` as the backbone. Throughout the README we write **Ours (textual)** and **Ours (parametric)** to disambiguate the two conditioning paradigms — both refer to PHASE-Tree, distinguished by which baseline block they sit in (paper Table 1 = internal ablation, Table 2 = external comparison with two `Ours` columns side by side).
@@ -117,7 +110,7 @@ PHASE-Tree/
 |---------|------|--------------|--------------------|--------------|
 | Dataset | `IAAR-Shanghai/LongEvoRoleBench`        | [🤗 link](https://huggingface.co/datasets/IAAR-Shanghai/LongEvoRoleBench) | `LongEvoRoleBench/`   | ≈ 9 GB |
 | Model   | `IAAR-Shanghai/phase_tree_models`      | [🤗 link](https://huggingface.co/IAAR-Shanghai/phase_tree_models)       | `phase_tree_models/` | ≈ 1.8 GB |
-| Results | `Mathematics-Yang/phase_tree_results`  | [🤗 link](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 9 GB |
+| Results | `Mathematics-Yang/phase_tree_results`  | [🤗 link](https://huggingface.co/datasets/Mathematics-Yang/phase_tree_results) | `results/`           | ≈ 6.5 GB |
 
 **One-shot download (run from the repo root):**
 
@@ -441,16 +434,14 @@ Re-scoring the *same* `Qwen2.5-7B-Instruct` predictions with three LLM-as-Judge 
 ## 📌 Citation
 
 ```bibtex
-@article{tang2026phasetree,
+@misc{tang2026phasetree,
   title         = {PHASE-Tree: Modeling Character-State Evolution in Long-Horizon Role-Playing Dialogue},
-  author        = {Tang, Bo and Yang, Jianan and Zhu, Junyi and Wu, Yiquan and Zhao, Rui and Yang, Zhengyu and Zhang, Yang and Xiong, Feiyu and Li, Zhiyu and Shen, Jiajun},
-  journal       = {arXiv preprint arXiv:2608.06975},
+  author        = {Bo Tang and Jianan Yang and Junyi Zhu and Yiquan Wu and Rui Zhao and Zhengyu Yang and Yang Zhang and Feiyu Xiong and Zhiyu Li and Jiajun Shen},
   year          = {2026},
   eprint        = {2608.06975},
   archivePrefix = {arXiv},
   primaryClass  = {cs.CL},
-  doi           = {10.48550/arXiv.2608.06975},
-  url           = {https://arxiv.org/abs/2608.06975}
+  url           = {https://arxiv.org/abs/2608.06975},
 }
 ```
 
